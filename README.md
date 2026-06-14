@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🧬 ProTool Risk
+# 🧬 TRACE – Trial Risk Assessment & Co-Pilot Engine
 
 ### AI-Powered Clinical Trial Risk Predictor
 
@@ -20,9 +20,9 @@
 
 ---
 
-## 🎯 What is ProTool Risk?
+## 🎯 What is TRACE – Trial Risk Assessment & Co-Pilot Engine?
 
-ProTool Risk is an end-to-end machine learning system that predicts whether a clinical trial is at risk of **early termination** — before it fails. By combining:
+TRACE – Trial Risk Assessment & Co-Pilot Engine is an end-to-end machine learning system that predicts whether a clinical trial is at risk of **early termination** — before it fails. By combining:
 
 - 🧠 **BioClinicalBERT** embeddings (768-dim clinical language understanding)
 - 🌲 **XGBoost** classifier with isotonic calibration
@@ -46,7 +46,7 @@ ProTool Risk is an end-to-end machine learning system that predicts whether a cl
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    ProTool Risk Pipeline                     │
+│                    TRACE – Trial Risk Assessment & Co-Pilot Engine Pipeline                     │
 ├─────────────┬─────────────┬──────────────┬─────────────────┤
 │  pipeline   │  features   │   embedder   │    trainer      │
 │  .py        │  .py        │   .py        │    .py          │
@@ -74,8 +74,8 @@ ProTool Risk is an end-to-end machine learning system that predicts whether a cl
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/<your-username>/protool-risk.git
-cd protool-risk
+git clone https://github.com/<your-username>/trace.git
+cd trace
 ```
 
 ### 2. Run Setup
@@ -126,7 +126,7 @@ Open the **public URL** in your browser to access the demo.
 ## 📁 Project Structure
 
 ```
-protool-risk/
+trace/
 ├── pipeline.py          # Data ingestion from ClinicalTrials.gov API
 ├── features.py          # Feature engineering (13 structured features)
 ├── embedder.py          # BioClinicalBERT embedding extraction (GPU)
@@ -175,12 +175,12 @@ All configuration is via **environment variables** with sensible defaults:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PROTOOL_DATA_DIR` | `data` | Data directory |
-| `PROTOOL_ARTIFACTS_DIR` | `artifacts` | Model artifacts directory |
-| `PROTOOL_DEMO_DIR` | `demo` | Demo assets directory |
-| `PROTOOL_MODEL` | `artifacts/xgb_model.pkl` | Trained model path |
-| `PROTOOL_EXPLAINER` | `artifacts/shap_explainer.pkl` | SHAP explainer path |
-| `PROTOOL_THRESHOLD` | `artifacts/optimal_threshold.json` | Decision threshold |
+| `TRACE_DATA_DIR` | `data` | Data directory |
+| `TRACE_ARTIFACTS_DIR` | `artifacts` | Model artifacts directory |
+| `TRACE_DEMO_DIR` | `demo` | Demo assets directory |
+| `TRACE_MODEL` | `artifacts/xgb_model.pkl` | Trained model path |
+| `TRACE_EXPLAINER` | `artifacts/shap_explainer.pkl` | SHAP explainer path |
+| `TRACE_THRESHOLD` | `artifacts/optimal_threshold.json` | Decision threshold |
 | `ANTHROPIC_API_KEY` | *(none)* | Required for LLM co-pilot fallback |
 
 See the full reference in the [setup guide](docs/amd_notebook_setup_guide.md).

@@ -1,5 +1,5 @@
 # ============================================================
-# ProTool Risk — Clinical Trial Risk Prediction
+# TRACE – Trial Risk Assessment & Co-Pilot Engine — Clinical Trial Risk Prediction
 # Requirements for AMD MI300X Notebook (ROCm)
 # ============================================================
 #

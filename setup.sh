@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================
-# ProTool Risk — AMD MI300X Environment Setup
+# TRACE – Trial Risk Assessment & Co-Pilot Engine — AMD MI300X Environment Setup
 # ============================================================
 # Usage:
 #   chmod +x setup.sh && ./setup.sh
@@ -9,7 +9,7 @@
 set -e
 
 echo "══════════════════════════════════════════════════════════"
-echo "  ProTool Risk — AMD MI300X Setup"
+echo "  TRACE – Trial Risk Assessment & Co-Pilot Engine — AMD MI300X Setup"
 echo "══════════════════════════════════════════════════════════"
 
 # ── Create directories ─────────────────────────────────────

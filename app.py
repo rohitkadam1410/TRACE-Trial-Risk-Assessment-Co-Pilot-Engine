@@ -1,5 +1,5 @@
 """
-app.py — ProTool Risk: Clinical Trial Risk Prediction Demo
+app.py — TRACE – Trial Risk Assessment & Co-Pilot Engine: Clinical Trial Risk Prediction Demo
 ==========================================================
 Single-file Gradio Blocks application for the AMD MI300X hackathon pitch.
 
@@ -42,35 +42,35 @@ import gradio as gr
 # ---------------------------------------------------------------------------
 
 DEMO_CACHE_PATH: str = os.environ.get(
-    "PROTOOL_DEMO_CACHE", "demo/demo_cache.json"
+    "TRACE_DEMO_CACHE", "demo/demo_cache.json"
 )
 COPILOT_CACHE_PATH: str = os.environ.get(
-    "PROTOOL_COPILOT_CACHE", "artifacts/demo_cache.json"
+    "TRACE_COPILOT_CACHE", "artifacts/demo_cache.json"
 )
-MODEL_PATH: str = os.environ.get("PROTOOL_MODEL", "artifacts/xgb_model.pkl")
+MODEL_PATH: str = os.environ.get("TRACE_MODEL", "artifacts/xgb_model.pkl")
 EXPLAINER_PATH: str = os.environ.get(
-    "PROTOOL_EXPLAINER", "artifacts/shap_explainer.pkl"
+    "TRACE_EXPLAINER", "artifacts/shap_explainer.pkl"
 )
 SCALER_PATH: str = os.environ.get(
-    "PROTOOL_SCALER", "artifacts/feature_scaler.pkl"
+    "TRACE_SCALER", "artifacts/feature_scaler.pkl"
 )
 FEATURE_META_PATH: str = os.environ.get(
-    "PROTOOL_FEATURE_META", "artifacts/feature_meta.json"
+    "TRACE_FEATURE_META", "artifacts/feature_meta.json"
 )
 FEATURE_NAMES_PATH: str = os.environ.get(
-    "PROTOOL_FEATURE_NAMES", "artifacts/feature_names.json"
+    "TRACE_FEATURE_NAMES", "artifacts/feature_names.json"
 )
 THRESHOLD_PATH: str = os.environ.get(
-    "PROTOOL_THRESHOLD", "artifacts/optimal_threshold.json"
+    "TRACE_THRESHOLD", "artifacts/optimal_threshold.json"
 )
 DEMO_TRIALS_PATH: str = os.environ.get(
-    "PROTOOL_DEMO_TRIALS", "data/demo_trials.parquet"
+    "TRACE_DEMO_TRIALS", "data/demo_trials.parquet"
 )
 BENCHMARK_CHART_PATH: str = os.environ.get(
-    "PROTOOL_BENCHMARK_CHART", "demo/amd_benchmark.png"
+    "TRACE_BENCHMARK_CHART", "demo/amd_benchmark.png"
 )
 BENCHMARK_SUMMARY_PATH: str = os.environ.get(
-    "PROTOOL_BENCHMARK_SUMMARY", "artifacts/benchmark_summary.json"
+    "TRACE_BENCHMARK_SUMMARY", "artifacts/benchmark_summary.json"
 )
 DEMO_EMBEDDINGS_PATH: str = "demo/demo_embeddings.pkl"
 ERROR_LOG_PATH: str = "demo/app_errors.log"
@@ -113,7 +113,7 @@ _console_handler.setFormatter(
     logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 )
 
-logger = logging.getLogger("protool_app")
+logger = logging.getLogger("trace_app")
 logger.setLevel(logging.DEBUG)
 # Avoid duplicate handlers on notebook re-run
 if not logger.handlers:
@@ -378,7 +378,7 @@ def startup() -> str:
     divider = "=" * 52
     report_str = "\n".join(report)
     print(f"\n{divider}")
-    print("  ProTool Risk — Startup Report")
+    print("  TRACE – Trial Risk Assessment & Co-Pilot Engine — Startup Report")
     print(divider)
     for line in report:
         print(f"  {line}")
@@ -550,7 +550,7 @@ def _score_to_risk_tier(
 # ---------------------------------------------------------------------------
 
 CUSTOM_CSS: str = """
-/* ── ProTool Risk — Dark Theme ── */
+/* ── TRACE – Trial Risk Assessment & Co-Pilot Engine — Dark Theme ── */
 
 .risk-gauge {
     text-align: center;
@@ -1508,7 +1508,7 @@ def build_demo() -> gr.Blocks:
     with gr.Blocks(
         theme=theme,
         css=CUSTOM_CSS,
-        title="ProTool Risk — Clinical Trial Risk Predictor",
+        title="TRACE – Trial Risk Assessment & Co-Pilot Engine — Clinical Trial Risk Predictor",
         analytics_enabled=False,
     ) as app:
 
@@ -1521,7 +1521,7 @@ def build_demo() -> gr.Blocks:
             '<h1 style="font-size:30px;font-weight:800;margin:0;'
             "background:linear-gradient(135deg,#60A5FA,#A78BFA);"
             '-webkit-background-clip:text;-webkit-text-fill-color:transparent;">'
-            "🏥 ProTool Risk</h1>"
+            "🏥 TRACE – Trial Risk Assessment & Co-Pilot Engine</h1>"
             '<p style="color:#8888AA;font-size:14px;margin:4px 0 0;">'
             "Clinical Trial Risk Prediction · Powered by AMD MI300X</p></div>"
         )
@@ -1822,7 +1822,7 @@ def build_demo() -> gr.Blocks:
             '<div style="text-align:center;padding:14px 0 6px;'
             'border-top:1px solid rgba(255,255,255,0.05);margin-top:12px;">'
             '<p style="color:#444;font-size:11px;margin:0;">'
-            "ProTool Risk v1.0 · AMD Developer Cloud · "
+            "TRACE – Trial Risk Assessment & Co-Pilot Engine v1.0 · AMD Developer Cloud · "
             "BioClinicalBERT + XGBoost + SHAP</p></div>"
         )
 
@@ -1887,17 +1887,17 @@ if __name__ == "__main__" or True:  # True ensures it runs in notebook context
 # ┌──────────────────────────────────────┬──────────────────────────────────┐
 # │ Variable                             │ Default                          │
 # ├──────────────────────────────────────┼──────────────────────────────────┤
-# │ PROTOOL_DEMO_CACHE                   │ demo/demo_cache.json             │
-# │ PROTOOL_COPILOT_CACHE                │ artifacts/demo_cache.json        │
-# │ PROTOOL_MODEL                        │ artifacts/xgb_model.pkl          │
-# │ PROTOOL_EXPLAINER                    │ artifacts/shap_explainer.pkl     │
-# │ PROTOOL_SCALER                       │ artifacts/feature_scaler.pkl     │
-# │ PROTOOL_FEATURE_META                 │ artifacts/feature_meta.json      │
-# │ PROTOOL_FEATURE_NAMES                │ artifacts/feature_names.json     │
-# │ PROTOOL_THRESHOLD                    │ artifacts/optimal_threshold.json │
-# │ PROTOOL_DEMO_TRIALS                  │ data/demo_trials.parquet         │
-# │ PROTOOL_BENCHMARK_CHART              │ demo/amd_benchmark.png           │
-# │ PROTOOL_BENCHMARK_SUMMARY            │ artifacts/benchmark_summary.json │
+# │ TRACE_DEMO_CACHE                   │ demo/demo_cache.json             │
+# │ TRACE_COPILOT_CACHE                │ artifacts/demo_cache.json        │
+# │ TRACE_MODEL                        │ artifacts/xgb_model.pkl          │
+# │ TRACE_EXPLAINER                    │ artifacts/shap_explainer.pkl     │
+# │ TRACE_SCALER                       │ artifacts/feature_scaler.pkl     │
+# │ TRACE_FEATURE_META                 │ artifacts/feature_meta.json      │
+# │ TRACE_FEATURE_NAMES                │ artifacts/feature_names.json     │
+# │ TRACE_THRESHOLD                    │ artifacts/optimal_threshold.json │
+# │ TRACE_DEMO_TRIALS                  │ data/demo_trials.parquet         │
+# │ TRACE_BENCHMARK_CHART              │ demo/amd_benchmark.png           │
+# │ TRACE_BENCHMARK_SUMMARY            │ artifacts/benchmark_summary.json │
 # │ ANTHROPIC_API_KEY                    │ (required if vLLM unavailable)   │
 # └──────────────────────────────────────┴──────────────────────────────────┘
 #

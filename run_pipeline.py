@@ -1,5 +1,5 @@
 """
-ProTool Risk — Full Pipeline Runner
+TRACE – Trial Risk Assessment & Co-Pilot Engine — Full Pipeline Runner
 ====================================
 Executes all pipeline steps in order with timing and progress tracking.
 
@@ -59,7 +59,7 @@ def run_step(step_num: int, script: str, name: str, desc: str) -> bool:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="ProTool Risk — Full Pipeline Runner")
+    parser = argparse.ArgumentParser(description="TRACE – Trial Risk Assessment & Co-Pilot Engine — Full Pipeline Runner")
     parser.add_argument("--from", dest="from_step", type=int, default=1,
                         help="Start from step N (1-8)")
     parser.add_argument("--only", type=int, default=None,
@@ -71,7 +71,7 @@ def main():
         os.makedirs(d, exist_ok=True)
 
     print("╔══════════════════════════════════════════════════════════╗")
-    print("║        ProTool Risk — Clinical Trial Predictor          ║")
+    print("║        TRACE – Trial Risk Assessment & Co-Pilot Engine — Clinical Trial Predictor          ║")
     print("║              AMD MI300X Pipeline Runner                 ║")
     print("╚══════════════════════════════════════════════════════════╝")
 

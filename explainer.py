@@ -34,9 +34,9 @@ logging.basicConfig(
 # Constants — callers may override via env vars before importing
 # ---------------------------------------------------------------------------
 
-ARTIFACTS_DIR: str = os.environ.get("PROTOOL_ARTIFACTS_DIR", "artifacts")
-DATA_DIR: str = os.environ.get("PROTOOL_DATA_DIR", "data")
-DEMO_DIR: str = os.environ.get("PROTOOL_DEMO_DIR", "demo")
+ARTIFACTS_DIR: str = os.environ.get("TRACE_ARTIFACTS_DIR", "artifacts")
+DATA_DIR: str = os.environ.get("TRACE_DATA_DIR", "data")
+DEMO_DIR: str = os.environ.get("TRACE_DEMO_DIR", "demo")
 
 # SHAP TreeExplainer is EXACT for tree models — no sampling, no approximation.
 # It computes the exact Shapley value for each feature using the tree structure.
@@ -1072,9 +1072,9 @@ if __name__ == "__main__":
 #   demo/demo_cache.json              — pre-computed predictions + explanations
 #
 # ## Environment variables / constants the caller may set:
-#   PROTOOL_ARTIFACTS_DIR  — override default "artifacts" directory
-#   PROTOOL_DATA_DIR       — override default "data" directory
-#   PROTOOL_DEMO_DIR       — override default "demo" directory
+#   TRACE_ARTIFACTS_DIR  — override default "artifacts" directory
+#   TRACE_DATA_DIR       — override default "data" directory
+#   TRACE_DEMO_DIR       — override default "demo" directory
 #
 # ## Downstream consumers:
 #   - Gradio app: loads demo/demo_cache.json for zero-latency demo rendering.

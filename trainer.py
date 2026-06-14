@@ -36,8 +36,8 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 # Constants — callers may override via env vars before importing this module
 # ---------------------------------------------------------------------------
 
-ARTIFACTS_DIR: str = os.environ.get("PROTOOL_ARTIFACTS_DIR", "artifacts")
-DATA_DIR: str = os.environ.get("PROTOOL_DATA_DIR", "data")
+ARTIFACTS_DIR: str = os.environ.get("TRACE_ARTIFACTS_DIR", "artifacts")
+DATA_DIR: str = os.environ.get("TRACE_DATA_DIR", "data")
 
 # Expected filenames produced by upstream modules (features.py, embedder.py)
 FEATURES_TRAIN_FILE: str = "features_train.parquet"
@@ -832,8 +832,8 @@ def run_training() -> dict:
 #   artifacts/ablation_results.json   — A/B/C ablation AUROC comparison
 #
 # ## Environment variables / constants the caller may set:
-#   PROTOOL_ARTIFACTS_DIR  — override default "artifacts" directory
-#   PROTOOL_DATA_DIR       — override default "data" directory
+#   TRACE_ARTIFACTS_DIR  — override default "artifacts" directory
+#   TRACE_DATA_DIR       — override default "data" directory
 #
 # ## Downstream consumers:
 #   - Gradio app: loads xgb_model.pkl, optimal_threshold.json, feature_scaler.pkl
