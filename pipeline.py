@@ -144,10 +144,10 @@ def parse_and_preprocess(records: List[Dict[str, Any]]) -> pd.DataFrame:
         condition_count = len(conditions_list) if isinstance(conditions_list, list) else 1
         
         status_upper = status.upper()
-        if status_upper in ["TERMINATED", "WITHDRAWN", "SUSPENDED"]:
+        if status_upper in ["WITHDRAWN", "SUSPENDED"]:
             terminated = 1
         else:
-            terminated = 0 
+            terminated = 0
             
         parsed.append({
             "nct_id": nct_id,
@@ -229,7 +229,7 @@ if __name__ == "__main__":
 
 def run_pipeline():
     """Main execution block to orchestrate data ingestion and prep."""
-    conditions = ["cancer", "diabetes", "heart failure", "depression", "hypertension", "asthma"]
+    conditions = ["cancer", "carcinoma", "tumor", "neoplasm", "lymphoma", "leukemia"]
     logging.info("Starting data ingestion...")
     records = fetch_trials(conditions, target_count=5000)
     
