@@ -930,6 +930,7 @@ def run_explainer_pipeline() -> dict:
     threshold = threshold_data["threshold"]
     logging.info(f"Optimal threshold: {threshold}")
 
+    # Load training data for explainer background
     from trainer import load_feature_matrices, build_feature_matrix
     df_train, _ = load_feature_matrices()
     X_train, _, _ = build_feature_matrix(df_train)
