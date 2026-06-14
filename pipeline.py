@@ -10,7 +10,8 @@ import pandas as pd
 from typing import List, Dict, Any
 from sklearn.model_selection import train_test_split
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+import logger_config
+logger_config.setup_logging(__file__)
 
 # ── CELL BREAK ──
 

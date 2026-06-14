@@ -28,7 +28,8 @@ from sklearn.model_selection import StratifiedKFold
 import xgboost as xgb
 
 warnings.filterwarnings("ignore", category=UserWarning)
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+import logger_config
+logger_config.setup_logging(__file__)
 
 # ── CELL BREAK ──
 

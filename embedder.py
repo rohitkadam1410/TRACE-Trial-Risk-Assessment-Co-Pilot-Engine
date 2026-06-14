@@ -26,10 +26,8 @@ from transformers import AutoTokenizer, AutoModel
 # Suppress tokenizer parallelism warnings in notebook cells
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-)
+import logger_config
+logger_config.setup_logging(__file__)
 
 # ── CELL BREAK ──
 

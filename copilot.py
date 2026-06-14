@@ -22,10 +22,8 @@ import requests
 import openai
 import anthropic
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
+import logger_config
+logger_config.setup_logging(__file__)
 logger = logging.getLogger("copilot")
 
 # ── CELL BREAK ──

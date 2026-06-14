@@ -23,10 +23,8 @@ matplotlib.use("Agg")  # Non-interactive backend — no display server required
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-)
+import logger_config
+logger_config.setup_logging(__file__)
 
 # ── CELL BREAK ──
 
