@@ -1,0 +1,36 @@
+# ============================================================
+# ProTool Risk — Clinical Trial Risk Prediction
+# Requirements for AMD MI300X Notebook (ROCm)
+# ============================================================
+#
+# IMPORTANT: Install PyTorch ROCm FIRST, before this file:
+#   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm6.0
+#
+# Then install everything else:
+#   pip install -r requirements.txt
+# ============================================================
+
+# ── Deep Learning ──────────────────────────────────────────
+transformers               # HuggingFace (BioClinicalBERT)
+
+# ── ML & Explainability ───────────────────────────────────
+xgboost>=2.0               # Gradient boosting classifier
+shap>=0.44                 # SHAP TreeExplainer
+scikit-learn               # StandardScaler, metrics, etc.
+
+# ── Core Scientific ───────────────────────────────────────
+numpy
+pandas
+scipy
+joblib
+
+# ── Visualization ─────────────────────────────────────────
+matplotlib
+
+# ── Web UI ─────────────────────────────────────────────────
+gradio>=4.0                # Gradio Blocks interface
+
+# ── HTTP & API Clients ────────────────────────────────────
+requests                   # ClinicalTrials.gov API
+openai                     # OpenAI-compatible client (vLLM)
+anthropic                  # Anthropic API fallback (co-pilot)
