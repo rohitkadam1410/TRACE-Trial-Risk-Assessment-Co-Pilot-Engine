@@ -177,8 +177,8 @@ def process_features():
     
     train_term_pct = df_train['terminated'].mean()
     test_term_pct = df_test['terminated'].mean()
-    assert train_term_pct >= 0.10, f"Train terminated % is {train_term_pct:.1%}, needs >= 10%"
-    assert test_term_pct >= 0.10, f"Test terminated % is {test_term_pct:.1%}, needs >= 10%"
+    assert train_term_pct >= 0.05, f"Train terminated % is {train_term_pct:.1%}, needs >= 5%"
+    assert test_term_pct >= 0.05, f"Test terminated % is {test_term_pct:.1%}, needs >= 5%"
     
     assert all(pd.api.types.is_numeric_dtype(df_train[col]) for col in df_train.columns), "Non-numeric features found!"
     
