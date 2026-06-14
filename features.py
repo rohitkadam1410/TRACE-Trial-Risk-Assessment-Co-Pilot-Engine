@@ -33,7 +33,9 @@ def get_feature_labels() -> dict[str, str]:
         "has_placebo": "Uses placebo control",
         "has_randomized": "Is randomized",
         "has_multicenter": "Is multi-center study",
-        "text_complexity": "Text complexity score"
+        "text_complexity": "Text complexity score",
+        "enrollment_to_phase_ratio": "Enrollment to phase ratio",
+        "criteria_word_density": "Criteria vocabulary density"
     }
 
 # ── CELL BREAK ──
@@ -105,6 +107,22 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     # 13. text_complexity: (criteria_length + title_length) / (outcome_count + 1)
     df_feat['text_complexity'] = (df_feat['criteria_length'] + df_feat['title_length']) / (df_feat['outcome_count'] + 1)
     
+    # 14. enrollment_to_phase_ratio: enrollment / (phase + 1)
+    enroll_raw = df.get('enrollment_count', pd.Series([0]*len(df))).fillna(0).astype(float)
+    phase_raw = df.get('phase_encoded', pd.Series([0]*len(df))).fillna(0).astype(float)
+    df_feat['enrollment_to_phase_ratio'] = enroll_raw / (phase_raw + 1)
+    
+    # 15. criteria_word_density: unique words / total words in eligibility criteria
+    def calc_density(text):
+        if not text:
+            return 0.0
+        words = str(text).split()
+        if not words:
+            return 0.0
+        return len(set(words)) / len(words)
+        
+    df_feat['criteria_word_density'] = criteria.apply(calc_density).astype(float)
+    
     return df_feat, full_text
 
 # ── CELL BREAK ──
@@ -140,7 +158,7 @@ def process_features():
     print(f"Test size: {len(df_test)} ({len(df_test)/len(df_feat):.1%})")
     
     # Scale specific continuous features on train split only
-    cols_to_scale = ['log_enrollment', 'criteria_length', 'title_length', 'text_complexity']
+    cols_to_scale = ['log_enrollment', 'criteria_length', 'title_length', 'text_complexity', 'enrollment_to_phase_ratio', 'criteria_word_density']
     
     print("Fitting and applying standard scaler...")
     scaler = StandardScaler()

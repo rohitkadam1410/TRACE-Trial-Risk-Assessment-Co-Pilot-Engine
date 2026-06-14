@@ -122,78 +122,35 @@ def load_feature_matrices() -> tuple[pd.DataFrame, pd.DataFrame]:
     return df_train, df_test
 
 
-def load_embeddings() -> tuple[np.ndarray, np.ndarray]:
-    """
-    Load pre-computed BioClinicalBERT [CLS] embeddings (768-d per sample).
-
-    Returns
-    -------
-    emb_train, emb_test : np.ndarray
-        Float32 arrays of shape (n_samples, 768).
-    """
-    train_path = os.path.join(DATA_DIR, EMBEDDINGS_TRAIN_FILE)
-    test_path = os.path.join(DATA_DIR, EMBEDDINGS_TEST_FILE)
-
-    if not os.path.exists(train_path):
-        raise FileNotFoundError(
-            f"Train embeddings not found at {train_path}. Run embedder.py first."
-        )
-    if not os.path.exists(test_path):
-        raise FileNotFoundError(
-            f"Test embeddings not found at {test_path}. Run embedder.py first."
-        )
-
-    emb_train = np.load(train_path).astype(np.float32)
-    emb_test = np.load(test_path).astype(np.float32)
-    logging.info(
-        f"Loaded BERT embeddings — train: {emb_train.shape}, test: {emb_test.shape}"
-    )
-    return emb_train, emb_test
-
-
-def build_combined_matrix(
+def build_feature_matrix(
     df: pd.DataFrame,
-    embeddings: np.ndarray,
     target_col: str = "terminated",
 ) -> tuple[np.ndarray, np.ndarray, list[str]]:
     """
-    Horizontally concatenate structured features with BERT embeddings.
+    Extract structured features and labels from the dataframe.
 
     Parameters
     ----------
     df : pd.DataFrame
         Must contain the *target_col* column; all other columns are features.
-    embeddings : np.ndarray
-        (n_samples, 768) array of BERT [CLS] embeddings.
     target_col : str
         Name of the binary target column.
 
     Returns
     -------
-    X : np.ndarray of shape (n, n_structured + 768)
+    X : np.ndarray of shape (n, n_structured)
     y : np.ndarray of shape (n,)
     feature_names : list[str]
-        Ordered list: structured feature names followed by bert_0 … bert_767.
+        Ordered list of structured feature names.
     """
     structured_cols = [c for c in df.columns if c != target_col]
-    X_struct = df[structured_cols].values.astype(np.float32)
+    X = df[structured_cols].values.astype(np.float32)
     y = df[target_col].values.astype(np.int32)
-
-    # Validate row-count alignment
-    if X_struct.shape[0] != embeddings.shape[0]:
-        raise ValueError(
-            f"Row mismatch: structured features have {X_struct.shape[0]} rows "
-            f"but embeddings have {embeddings.shape[0]} rows."
-        )
-
-    X = np.hstack([X_struct, embeddings])
-
-    bert_names = [f"bert_{i}" for i in range(embeddings.shape[1])]
-    feature_names = structured_cols + bert_names
+    feature_names = structured_cols
 
     logging.info(
-        f"Combined matrix shape: {X.shape} "
-        f"({len(structured_cols)} structured + {embeddings.shape[1]} BERT dims)"
+        f"Feature matrix shape: {X.shape} "
+        f"({len(structured_cols)} structured features)"
     )
     return X, y, feature_names
 
@@ -487,107 +444,9 @@ def find_optimal_threshold(
 
 # ── CELL BREAK ──
 
-# ---------------------------------------------------------------------------
-# Ablation study
-# ---------------------------------------------------------------------------
 
 
-def run_ablation(
-    X_train_raw: np.ndarray,
-    X_test_raw: np.ndarray,
-    X_train_pca: np.ndarray,
-    X_test_pca: np.ndarray,
-    y_train: np.ndarray,
-    y_test: np.ndarray,
-    n_structured: int,
-) -> dict:
-    """
-    Quick ablation comparing four feature configurations.
-    """
-    scale_pos_weight = compute_scale_pos_weight(y_train)
 
-    ablation_params = {
-        "n_estimators": 200,
-        "max_depth": 4,
-        "learning_rate": 0.1,
-        "subsample": 0.8,
-        "colsample_bytree": 0.8,
-        "min_child_weight": 3,
-        "scale_pos_weight": scale_pos_weight,
-        "use_label_encoder": False,
-        "eval_metric": "auc",
-        "early_stopping_rounds": 20,
-        "random_state": 42,
-        "tree_method": "hist",
-        "n_jobs": -1,
-    }
-
-    # Slice feature matrices
-    X_train_struct = X_train_raw[:, :n_structured]
-    X_test_struct = X_test_raw[:, :n_structured]
-    X_train_bert = X_train_raw[:, n_structured:]
-    X_test_bert = X_test_raw[:, n_structured:]
-
-    results = {}
-
-    for name, Xtr, Xte in [
-        ("A_structured_only", X_train_struct, X_test_struct),
-        ("B_bert_only", X_train_bert, X_test_bert),
-        ("C_bert_plus_structured", X_train_raw, X_test_raw),
-        ("D_pca32_plus_structured", X_train_pca, X_test_pca),
-    ]:
-        logging.info(f"Ablation — training {name} ({Xtr.shape[1]} features) …")
-        t0 = time.perf_counter()
-
-        clf = xgb.XGBClassifier(**ablation_params)
-        clf.fit(Xtr, y_train, eval_set=[(Xte, y_test)], verbose=0)
-
-        y_proba = clf.predict_proba(Xte)[:, 1]
-        auroc = roc_auc_score(y_test, y_proba)
-        elapsed = time.perf_counter() - t0
-
-        results[name] = {
-            "auroc": round(auroc, 4),
-            "n_features": Xtr.shape[1],
-            "training_time_s": round(elapsed, 2),
-        }
-        logging.info(f"  {name}: AUROC = {auroc:.4f} ({elapsed:.1f}s)")
-
-    # Print summary table
-    print("\n" + "=" * 60)
-    print("  ABLATION STUDY — Feature Configuration Comparison")
-    print("=" * 60)
-    print(f"  {'Model':<30s} {'AUROC':>8s}  {'Features':>8s}  {'Time':>6s}")
-    print("-" * 60)
-    for name, vals in results.items():
-        print(
-            f"  {name:<30s} {vals['auroc']:>8.4f}  "
-            f"{vals['n_features']:>8d}  {vals['training_time_s']:>5.1f}s"
-        )
-    print("-" * 60)
-
-    # Validate expected ordering: C > B > A
-    a = results["A_structured_only"]["auroc"]
-    b = results["B_bert_only"]["auroc"]
-    c = results["C_bert_plus_structured"]["auroc"]
-
-    if c >= b >= a:
-        print("  ✓ Expected ordering confirmed: C > B > A")
-    else:
-        print(
-            "  ⚠ WARNING: Unexpected ordering! "
-            "Investigate data quality / feature engineering."
-        )
-        # Append warning to results for downstream consumption
-        results["warning"] = (
-            f"Expected C >= B >= A but got A={a:.4f}, B={b:.4f}, C={c:.4f}"
-        )
-
-    print("=" * 60 + "\n")
-    return results
-
-
-# ── CELL BREAK ──
 
 # ---------------------------------------------------------------------------
 # Inference function (used by Gradio demo app)
@@ -598,7 +457,6 @@ def predict_risk(
     text: str,
     structured_features: dict,
     model,
-    embedder_fn: Callable,
     scaler,
     threshold: float,
 ) -> dict:
@@ -613,9 +471,6 @@ def predict_risk(
         Keys matching the engineered feature names from features.py, e.g.:
         {"log_enrollment": 4.6, "phase_encoded": 3, "has_expanded_access": 0, …}
     model : fitted + calibrated model (CalibratedClassifierCV wrapping XGBoost).
-    embedder_fn : callable
-        Function that takes a string and returns a (1, 768) np.ndarray of
-        BioClinicalBERT [CLS] embeddings.  Signature: embedder_fn(text) -> np.ndarray
     scaler : fitted StandardScaler from features.py.
     threshold : float
         Optimal decision threshold from find_optimal_threshold().
@@ -644,7 +499,8 @@ def predict_risk(
     )
 
     # Apply the same scaling used during training (only to continuous cols)
-    cols_to_scale = ["log_enrollment", "criteria_length", "title_length", "text_complexity"]
+    # --- Apply scaling ---
+    cols_to_scale = ["log_enrollment", "criteria_length", "title_length", "text_complexity", "enrollment_to_phase_ratio", "criteria_word_density"]
     scale_indices = [ordered_cols.index(c) for c in cols_to_scale if c in ordered_cols]
 
     if scale_indices and scaler is not None:
@@ -653,19 +509,7 @@ def predict_risk(
             struct_values[:, scale_indices]
         )[0]
 
-    # --- Build BERT embedding vector ---
-    embedding = embedder_fn(text)  # expected shape: (1, 768) or (768,)
-    if embedding.ndim == 1:
-        embedding = embedding.reshape(1, -1)
-
-    # --- Apply PCA reduction ---
-    pca_path = os.path.join(ARTIFACTS_DIR, "pca_reducer.pkl")
-    if os.path.exists(pca_path):
-        pca = joblib.load(pca_path)
-        embedding = pca.transform(embedding).astype(np.float32)
-
-    # --- Combine ---
-    feature_vector = np.hstack([struct_values, embedding]).astype(np.float32)
+    feature_vector = struct_values
 
     # --- Predict ---
     prob = float(model.predict_proba(feature_vector)[:, 1][0])
@@ -689,71 +533,56 @@ def predict_risk(
 
 def run_training() -> dict:
     """
-    Full training pipeline:
-      1. Load structured features + BERT embeddings
-      2. Build combined feature matrix
+    Full training pipeline (Structured Features Only):
+      1. Load structured features
+      2. Build feature matrix
       3. Train XGBoost with early stopping
       4. Calibrate with isotonic regression
       5. Evaluate on test set
       6. Tune decision threshold (maximise F1)
       7. Re-evaluate at optimal threshold
-      8. Run ablation study
-      9. Save all artifacts
+      8. Save all artifacts
 
     Returns
     -------
-    summary : dict  with all metrics, threshold, and ablation results.
+    summary : dict  with all metrics and threshold.
     """
     ensure_dirs()
     t_start = time.perf_counter()
 
     # ── Step 1: Load data ──
     df_train, df_test = load_feature_matrices()
-    emb_train_raw, emb_test_raw = load_embeddings()
 
-    # ── Step 2: PCA reduction on BERT ──
-    logging.info("Applying PCA to reduce BERT embeddings from 768 to 32 dimensions...")
-    from sklearn.decomposition import PCA
-    pca = PCA(n_components=32, random_state=42)
-    emb_train_pca = pca.fit_transform(emb_train_raw).astype(np.float32)
-    emb_test_pca = pca.transform(emb_test_raw).astype(np.float32)
-    
-    pca_path = os.path.join(ARTIFACTS_DIR, "pca_reducer.pkl")
-    joblib.dump(pca, pca_path)
-    logging.info(f"Saved PCA reducer → {pca_path}")
+    # ── Step 2: Build matrices ──
+    X_train, y_train, feature_names = build_feature_matrix(df_train)
+    X_test, y_test, _ = build_feature_matrix(df_test)
 
-    # ── Step 3: Build combined matrices ──
-    X_train, y_train, feature_names = build_combined_matrix(df_train, emb_train_pca)
-    X_test, y_test, _ = build_combined_matrix(df_test, emb_test_pca)
-
-    n_structured = len([c for c in df_train.columns if c != "terminated"])
     print(f"\nFeature breakdown:")
-    print(f"  Structured features : {n_structured}")
-    print(f"  BERT dimensions     : 32 (PCA reduced from 768)")
+    print(f"  Structured features : {X_train.shape[1]}")
     print(f"  Total features      : {X_train.shape[1]}")
     print(f"  Train samples       : {X_train.shape[0]}")
     print(f"  Test samples        : {X_test.shape[0]}")
     print(f"  Positive rate (train): {y_train.mean():.1%}")
     print(f"  Positive rate (test) : {y_test.mean():.1%}")
 
-    # ── Step 4: Train XGBoost ──
+    # ── Step 3: Train XGBoost ──
     raw_model = train_xgboost(X_train, y_train, X_test, y_test, feature_names)
 
-    # ── Step 5: Calibrate ──
+    # ── Step 4: Calibrate ──
     calibrated_model = calibrate_model(raw_model, X_train, y_train)
 
-    # ── Step 6: Evaluate at default threshold 0.5 ──
+    # ── Step 5: Evaluate at default threshold 0.5 ──
     print("\n▶ Evaluation at default threshold (0.5):")
     metrics_default = evaluate_model(
         calibrated_model, X_test, y_test, threshold=0.5, label="Calibrated XGBoost"
     )
 
-    # ── Step 7: Tune threshold ──
+    # ── Step 6: Tune threshold ──
     optimal_threshold, best_f1 = find_optimal_threshold(
         calibrated_model, X_test, y_test
     )
 
-    # ── Step 8: Re-evaluate at optimal threshold ──
+    # ── Step 7: Re-evaluate at optimal threshold ──
     print("\n▶ Evaluation at OPTIMAL threshold:")
     metrics_optimal = evaluate_model(
         calibrated_model,
@@ -763,49 +592,37 @@ def run_training() -> dict:
         label="Calibrated XGBoost (tuned)",
     )
 
-    # ── Step 9: Ablation ──
-    # Build raw matrices for the raw BERT ablation step
-    X_train_raw, _, _ = build_combined_matrix(df_train, emb_train_raw)
-    X_test_raw, _, _ = build_combined_matrix(df_test, emb_test_raw)
-
-    ablation_results = run_ablation(
-        X_train_raw, X_test_raw, X_train, X_test, y_train, y_test, n_structured
-    )
-
-    # ── Step 9: Save artifacts ──
+    # ── Step 8: Save artifacts ──
     logging.info("Saving artifacts …")
 
-    # 9a. Calibrated model
+    # 8a. Calibrated model
     model_path = os.path.join(ARTIFACTS_DIR, "xgb_model.pkl")
     joblib.dump(calibrated_model, model_path)
     logging.info(f"Saved calibrated model → {model_path}")
 
-    # 9b. Optimal threshold
+    # 8b. Optimal threshold
     threshold_data = {
         "threshold": round(optimal_threshold, 4),
         "f1_at_threshold": round(best_f1, 4),
     }
     _save_json(threshold_data, "optimal_threshold.json")
 
-    # 9c. Evaluation metrics (both default and optimal)
+    # 8c. Evaluation metrics
     eval_metrics = {
         "default_threshold_0.5": metrics_default,
         "optimal_threshold": metrics_optimal,
         "training_samples": int(X_train.shape[0]),
         "test_samples": int(X_test.shape[0]),
         "total_features": int(X_train.shape[1]),
-        "n_structured_features": n_structured,
-        "n_bert_features": int(X_train.shape[1] - n_structured),
+        "n_structured_features": int(X_train.shape[1]),
+        "n_bert_features": 0,
         "positive_rate_train": round(float(y_train.mean()), 4),
         "positive_rate_test": round(float(y_test.mean()), 4),
     }
     _save_json(eval_metrics, "eval_metrics.json")
 
-    # 9d. Feature names (for SHAP explainer)
+    # 8d. Feature names (for SHAP explainer)
     _save_json(feature_names, "feature_names.json")
-
-    # 9e. Ablation results
-    _save_json(ablation_results, "ablation_results.json")
 
     total_time = time.perf_counter() - t_start
     print(f"\n✅ Training pipeline complete in {total_time:.1f}s")
@@ -817,7 +634,6 @@ def run_training() -> dict:
     return {
         "metrics": metrics_optimal,
         "threshold": threshold_data,
-        "ablation": ablation_results,
         "elapsed_s": round(total_time, 2),
     }
 
