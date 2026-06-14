@@ -643,11 +643,15 @@ def run_embedding_pipeline(
     X_test = build_combined_features(emb_test, df_feat_test)
 
     # ── Step 5: Save all outputs ──
+    np.save("data/embeddings_train.npy", emb_train)
+    np.save("data/embeddings_test.npy", emb_test)
     np.save("data/X_train_combined.npy", X_train)
     np.save("data/X_test_combined.npy", X_test)
     np.save("data/y_train.npy", y_train)
     np.save("data/y_test.npy", y_test)
 
+    logging.info(f"Saved embeddings_train.npy — shape: {emb_train.shape}")
+    logging.info(f"Saved embeddings_test.npy  — shape: {emb_test.shape}")
     logging.info(f"Saved X_train_combined.npy — shape: {X_train.shape}")
     logging.info(f"Saved X_test_combined.npy  — shape: {X_test.shape}")
     logging.info(f"Saved y_train.npy — shape: {y_train.shape}")
