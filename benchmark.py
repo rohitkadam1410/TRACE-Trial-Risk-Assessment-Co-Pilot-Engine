@@ -693,7 +693,7 @@ def save_benchmark_summary(
     if torch.cuda.is_available():
         try:
             gpu_name = torch.cuda.get_device_name(0)
-            gpu_mem_gb = round(torch.cuda.get_device_properties(0).total_mem / (1024**3))
+            gpu_mem_gb = round(torch.cuda.get_device_properties(0).total_memory / (1024**3))
         except Exception:
             pass
 

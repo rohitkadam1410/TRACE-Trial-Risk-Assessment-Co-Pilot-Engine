@@ -66,7 +66,7 @@ def get_device(device: str = "cuda") -> torch.device:
     """
     if device == "cuda" and torch.cuda.is_available():
         gpu_name = torch.cuda.get_device_name(0)
-        mem_gb = torch.cuda.get_device_properties(0).total_mem / 1e9
+        mem_gb = torch.cuda.get_device_properties(0).total_memory / 1e9
         logging.info(f"GPU detected: {gpu_name} ({mem_gb:.1f} GB)")
         return torch.device("cuda")
     else:
