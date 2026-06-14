@@ -37,7 +37,7 @@ print(f'  PyTorch version : {torch.__version__}')
 print(f'  ROCm available  : {torch.cuda.is_available()}')
 if torch.cuda.is_available():
     print(f'  GPU device      : {torch.cuda.get_device_name(0)}')
-    mem = torch.cuda.get_device_properties(0).total_mem / 1e9
+    mem = torch.cuda.get_device_properties(0).total_memory / 1e9
     print(f'  GPU memory      : {mem:.1f} GB')
     x = torch.randn(256, 256, device='cuda')
     _ = torch.mm(x, x)

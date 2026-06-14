@@ -50,7 +50,6 @@ def fetch_trials(conditions: List[str], target_count: int = 5000) -> List[Dict[s
             params = {
                 "query.cond": condition,
                 "filter.overallStatus": "COMPLETED,TERMINATED,WITHDRAWN,SUSPENDED",
-                "fields": fields,
                 "pageSize": 100
             }
             if page_token:
