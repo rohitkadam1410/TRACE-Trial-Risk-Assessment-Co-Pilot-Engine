@@ -271,11 +271,12 @@ def train_xgboost(
     scale_pos_weight = compute_scale_pos_weight(y_train)
 
     xgb_params = {
-        "n_estimators": 500,
-        "max_depth": 6,
+        "n_estimators": 300,
+        "max_depth": 4,
         "learning_rate": 0.05,
         "subsample": 0.8,
         "colsample_bytree": 0.8,
+        "min_child_weight": 3,
         "scale_pos_weight": scale_pos_weight,
         "use_label_encoder": False,
         "eval_metric": "auc",
@@ -492,42 +493,26 @@ def find_optimal_threshold(
 
 
 def run_ablation(
-    X_train: np.ndarray,
+    X_train_raw: np.ndarray,
+    X_test_raw: np.ndarray,
+    X_train_pca: np.ndarray,
+    X_test_pca: np.ndarray,
     y_train: np.ndarray,
-    X_test: np.ndarray,
     y_test: np.ndarray,
     n_structured: int,
-    feature_names: list[str],
 ) -> dict:
     """
-    Quick ablation comparing three feature configurations to prove that
-    combining BERT + structured features is superior.
-
-    Models trained:
-        A — Structured features ONLY (no BERT)
-        B — BERT embeddings ONLY (no structured)
-        C — BERT + Structured (the main model, re-evaluated here)
-
-    Parameters
-    ----------
-    X_train, y_train : full combined training data.
-    X_test, y_test   : full combined test data.
-    n_structured     : number of leading columns that are structured features.
-    feature_names    : full ordered feature name list.
-
-    Returns
-    -------
-    results : dict  mapping model name → AUROC.
+    Quick ablation comparing four feature configurations.
     """
     scale_pos_weight = compute_scale_pos_weight(y_train)
 
-    # Shared lightweight params for fast ablation (fewer trees, less depth)
     ablation_params = {
         "n_estimators": 200,
-        "max_depth": 5,
+        "max_depth": 4,
         "learning_rate": 0.1,
         "subsample": 0.8,
         "colsample_bytree": 0.8,
+        "min_child_weight": 3,
         "scale_pos_weight": scale_pos_weight,
         "use_label_encoder": False,
         "eval_metric": "auc",
@@ -538,17 +523,18 @@ def run_ablation(
     }
 
     # Slice feature matrices
-    X_train_struct = X_train[:, :n_structured]
-    X_test_struct = X_test[:, :n_structured]
-    X_train_bert = X_train[:, n_structured:]
-    X_test_bert = X_test[:, n_structured:]
+    X_train_struct = X_train_raw[:, :n_structured]
+    X_test_struct = X_test_raw[:, :n_structured]
+    X_train_bert = X_train_raw[:, n_structured:]
+    X_test_bert = X_test_raw[:, n_structured:]
 
     results = {}
 
     for name, Xtr, Xte in [
         ("A_structured_only", X_train_struct, X_test_struct),
         ("B_bert_only", X_train_bert, X_test_bert),
-        ("C_bert_plus_structured", X_train, X_test),
+        ("C_bert_plus_structured", X_train_raw, X_test_raw),
+        ("D_pca32_plus_structured", X_train_pca, X_test_pca),
     ]:
         logging.info(f"Ablation — training {name} ({Xtr.shape[1]} features) …")
         t0 = time.perf_counter()
@@ -672,6 +658,12 @@ def predict_risk(
     if embedding.ndim == 1:
         embedding = embedding.reshape(1, -1)
 
+    # --- Apply PCA reduction ---
+    pca_path = os.path.join(ARTIFACTS_DIR, "pca_reducer.pkl")
+    if os.path.exists(pca_path):
+        pca = joblib.load(pca_path)
+        embedding = pca.transform(embedding).astype(np.float32)
+
     # --- Combine ---
     feature_vector = np.hstack([struct_values, embedding]).astype(np.float32)
 
@@ -717,40 +709,51 @@ def run_training() -> dict:
 
     # ── Step 1: Load data ──
     df_train, df_test = load_feature_matrices()
-    emb_train, emb_test = load_embeddings()
+    emb_train_raw, emb_test_raw = load_embeddings()
 
-    # ── Step 2: Build combined matrices ──
-    X_train, y_train, feature_names = build_combined_matrix(df_train, emb_train)
-    X_test, y_test, _ = build_combined_matrix(df_test, emb_test)
+    # ── Step 2: PCA reduction on BERT ──
+    logging.info("Applying PCA to reduce BERT embeddings from 768 to 32 dimensions...")
+    from sklearn.decomposition import PCA
+    pca = PCA(n_components=32, random_state=42)
+    emb_train_pca = pca.fit_transform(emb_train_raw).astype(np.float32)
+    emb_test_pca = pca.transform(emb_test_raw).astype(np.float32)
+    
+    pca_path = os.path.join(ARTIFACTS_DIR, "pca_reducer.pkl")
+    joblib.dump(pca, pca_path)
+    logging.info(f"Saved PCA reducer → {pca_path}")
+
+    # ── Step 3: Build combined matrices ──
+    X_train, y_train, feature_names = build_combined_matrix(df_train, emb_train_pca)
+    X_test, y_test, _ = build_combined_matrix(df_test, emb_test_pca)
 
     n_structured = len([c for c in df_train.columns if c != "terminated"])
     print(f"\nFeature breakdown:")
     print(f"  Structured features : {n_structured}")
-    print(f"  BERT dimensions     : {BERT_EMBEDDING_DIM}")
+    print(f"  BERT dimensions     : 32 (PCA reduced from 768)")
     print(f"  Total features      : {X_train.shape[1]}")
     print(f"  Train samples       : {X_train.shape[0]}")
     print(f"  Test samples        : {X_test.shape[0]}")
     print(f"  Positive rate (train): {y_train.mean():.1%}")
     print(f"  Positive rate (test) : {y_test.mean():.1%}")
 
-    # ── Step 3: Train XGBoost ──
+    # ── Step 4: Train XGBoost ──
     raw_model = train_xgboost(X_train, y_train, X_test, y_test, feature_names)
 
-    # ── Step 4: Calibrate ──
+    # ── Step 5: Calibrate ──
     calibrated_model = calibrate_model(raw_model, X_train, y_train)
 
-    # ── Step 5: Evaluate at default threshold 0.5 ──
+    # ── Step 6: Evaluate at default threshold 0.5 ──
     print("\n▶ Evaluation at default threshold (0.5):")
     metrics_default = evaluate_model(
         calibrated_model, X_test, y_test, threshold=0.5, label="Calibrated XGBoost"
     )
 
-    # ── Step 6: Tune threshold ──
+    # ── Step 7: Tune threshold ──
     optimal_threshold, best_f1 = find_optimal_threshold(
         calibrated_model, X_test, y_test
     )
 
-    # ── Step 7: Re-evaluate at optimal threshold ──
+    # ── Step 8: Re-evaluate at optimal threshold ──
     print("\n▶ Evaluation at OPTIMAL threshold:")
     metrics_optimal = evaluate_model(
         calibrated_model,
@@ -760,9 +763,13 @@ def run_training() -> dict:
         label="Calibrated XGBoost (tuned)",
     )
 
-    # ── Step 8: Ablation ──
+    # ── Step 9: Ablation ──
+    # Build raw matrices for the raw BERT ablation step
+    X_train_raw, _, _ = build_combined_matrix(df_train, emb_train_raw)
+    X_test_raw, _, _ = build_combined_matrix(df_test, emb_test_raw)
+
     ablation_results = run_ablation(
-        X_train, y_train, X_test, y_test, n_structured, feature_names
+        X_train_raw, X_test_raw, X_train, X_test, y_train, y_test, n_structured
     )
 
     # ── Step 9: Save artifacts ──
@@ -788,7 +795,7 @@ def run_training() -> dict:
         "test_samples": int(X_test.shape[0]),
         "total_features": int(X_train.shape[1]),
         "n_structured_features": n_structured,
-        "n_bert_features": BERT_EMBEDDING_DIM,
+        "n_bert_features": int(X_train.shape[1] - n_structured),
         "positive_rate_train": round(float(y_train.mean()), 4),
         "positive_rate_test": round(float(y_test.mean()), 4),
     }
