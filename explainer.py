@@ -52,11 +52,10 @@ SECTION_FEATURE_MAP: dict[str, list[str]] = {
     "Eligibility criteria": [
         "criteria_length",
         "has_age_restriction",
-        "bert_*",  # first 768 embedding dims encode eligibility semantics
+        "criteria_unique_ratio",
     ],
     "Primary endpoints": [
         "outcome_count",
-        "bert_*",  # primary outcome semantics also live in BERT space
     ],
     "Study design": [
         "is_interventional",
@@ -68,23 +67,13 @@ SECTION_FEATURE_MAP: dict[str, list[str]] = {
     "Enrollment & scale": [
         "log_enrollment",
         "condition_count",
+        "enrollment_deficit",
     ],
     "Protocol complexity": [
         "text_complexity",
         "title_length",
     ],
 }
-
-# NOTE ON BERT FEATURE ASSIGNMENT:
-# BERT CLS embeddings (bert_0 .. bert_767) encode the *entire* concatenated
-# trial text. They contain entangled information about eligibility, endpoints,
-# and overall protocol complexity. We assign them to "Eligibility criteria"
-# and "Primary endpoints" because the SHAP values of individual bert_i dims
-# are tiny and diffuse — grouping them into the most relevant clinical
-# sections prevents a misleading "BERT contributes nothing" artefact.
-# The structured features (criteria_length, outcome_count, etc.) dominate
-# the per-section SHAP sums, so the BERT assignment has minimal impact on
-# the top-level section ranking shown to judges.
 
 # ── CELL BREAK ──
 
@@ -120,12 +109,9 @@ def _load_feature_labels() -> dict[str, str]:
             "has_randomized": "Is randomized",
             "has_multicenter": "Is multi-center study",
             "text_complexity": "Text complexity score",
+            "enrollment_deficit": "Enrollment deficit vs phase avg",
+            "criteria_unique_ratio": "Criteria vocabulary uniqueness",
         }
-    # Add generic labels for BERT embedding dimensions
-    for i in range(768):
-        key = f"bert_{i}"
-        if key not in labels:
-            labels[key] = f"BERT embedding dim {i}"
     return labels
 
 
@@ -296,16 +282,12 @@ def get_section_attributions(
             section_sum += sv
             assigned.add(fname)
 
-            # Only include structured features in the detail breakdown.
-            # Individual BERT dims are too numerous and individually tiny
-            # to be useful in the demo UI.
-            if not fname.startswith("bert_"):
-                human_label = feature_labels.get(fname, fname)
-                features_detail.append({
-                    "name": human_label,
-                    "raw_name": fname,
-                    "shap": round(sv, 4),
-                })
+            human_label = feature_labels.get(fname, fname)
+            features_detail.append({
+                "name": human_label,
+                "raw_name": fname,
+                "shap": round(sv, 4),
+            })
 
         # Sort features within section by absolute SHAP value
         features_detail.sort(key=lambda x: abs(x["shap"]), reverse=True)
@@ -331,13 +313,12 @@ def get_section_attributions(
                 continue
             sv = float(shap_values[idx])
             other_sum += sv
-            if not fname.startswith("bert_"):
-                human_label = feature_labels.get(fname, fname)
-                other_features.append({
-                    "name": human_label,
-                    "raw_name": fname,
-                    "shap": round(sv, 4),
-                })
+            human_label = feature_labels.get(fname, fname)
+            other_features.append({
+                "name": human_label,
+                "raw_name": fname,
+                "shap": round(sv, 4),
+            })
         if abs(other_sum) > 1e-6:
             other_features.sort(key=lambda x: abs(x["shap"]), reverse=True)
             section_results.append({
@@ -356,15 +337,15 @@ def get_section_attributions(
 
 if __name__ == "__main__":
     # Smoke test with synthetic SHAP values
-    _n_feat = 13 + 768  # structured + BERT dims
+    _n_feat = 15
     _shap = np.random.randn(_n_feat).astype(np.float32) * 0.1
     _names = [
         "log_enrollment", "phase_encoded", "has_expanded_access",
         "condition_count", "title_length", "criteria_length",
         "outcome_count", "has_age_restriction", "is_interventional",
         "has_placebo", "has_randomized", "has_multicenter",
-        "text_complexity",
-    ] + [f"bert_{i}" for i in range(768)]
+        "text_complexity", "enrollment_deficit", "criteria_unique_ratio",
+    ]
     _labels = _load_feature_labels()
     _result = get_section_attributions(_shap, _names, _labels)
     for sec in _result:
@@ -595,19 +576,8 @@ def plot_waterfall(
     # Ensure output directory exists
     os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
 
-    # Aggregate BERT dims into a single "BERT embedding (aggregate)" bar
-    # to avoid 768 tiny bars dominating the chart
-    bert_mask = np.array([n.startswith("bert_") for n in feature_names])
-    bert_shap_sum = float(shap_values[bert_mask].sum()) if bert_mask.any() else 0.0
-
-    # Non-BERT features
-    non_bert_indices = np.where(~bert_mask)[0]
-    names_clean = [feature_names[i] for i in non_bert_indices]
-    values_clean = [float(shap_values[i]) for i in non_bert_indices]
-
-    # Add the aggregated BERT bar
-    names_clean.append("bert_aggregate")
-    values_clean.append(bert_shap_sum)
+    names_clean = feature_names.copy()
+    values_clean = list(shap_values)
 
     # Sort by absolute value and take top_n
     sorted_pairs = sorted(
@@ -622,10 +592,7 @@ def plot_waterfall(
     labels = []
     values = []
     for raw_name, val in sorted_pairs:
-        if raw_name == "bert_aggregate":
-            labels.append("BERT clinical embedding (aggregate)")
-        else:
-            labels.append(feature_labels.get(raw_name, raw_name))
+        labels.append(feature_labels.get(raw_name, raw_name))
         values.append(val)
 
     values_arr = np.array(values)
@@ -701,15 +668,15 @@ def plot_waterfall(
 if __name__ == "__main__":
     # Smoke test with synthetic data
     os.makedirs("demo", exist_ok=True)
-    _n = 13 + 768
+    _n = 15
     _sv = np.random.randn(_n).astype(np.float32) * 0.1
     _names = [
         "log_enrollment", "phase_encoded", "has_expanded_access",
         "condition_count", "title_length", "criteria_length",
         "outcome_count", "has_age_restriction", "is_interventional",
         "has_placebo", "has_randomized", "has_multicenter",
-        "text_complexity",
-    ] + [f"bert_{i}" for i in range(768)]
+        "text_complexity", "enrollment_deficit", "criteria_unique_ratio",
+    ]
     _labels = _load_feature_labels()
     _path = plot_waterfall(_sv, _names, _labels, top_n=10, output_path="demo/waterfall_test.png")
     print(f"Test waterfall saved: {_path}")
@@ -744,7 +711,6 @@ def _score_to_risk_tier(prob: float, threshold: float) -> tuple[str, str]:
 def generate_demo_cache(
     demo_trials: pd.DataFrame,
     model,
-    embedder_fn: Callable[[str], np.ndarray],
     scaler,
     explainer: shap.TreeExplainer,
     feature_names: list[str],
@@ -765,7 +731,6 @@ def generate_demo_cache(
         demo_trials: DataFrame with columns: nct_id, full_text, and optionally
                      officialTitle/conditions. Typically the 20-record demo subset.
         model: Fitted + calibrated model (CalibratedClassifierCV).
-        embedder_fn: Callable: str → np.ndarray of shape (1, 768) or (768,).
         scaler: Fitted StandardScaler from features.py.
         explainer: Pre-built SHAP TreeExplainer.
         feature_names: Ordered feature name list.
@@ -826,11 +791,18 @@ def generate_demo_cache(
             ),
             "text_complexity": 0.0,  # computed below
         }
-        # Compute derived feature
+        # Compute derived features
         structured["text_complexity"] = (
             (structured["criteria_length"] + structured["title_length"])
             / (structured["outcome_count"] + 1)
         )
+        phase_enrollment_expected = {1.0: 30, 2.0: 150, 3.0: 500, 4.0: 1000}
+        phase_val = float(row.get("phase_encoded", 0) or 0)
+        structured["enrollment_deficit"] = max(0, phase_enrollment_expected.get(phase_val if phase_val else 150, 150) - float(row.get("enrollment_count", 0) or 0))
+        
+        crit_text = str(row.get("eligibilityCriteria", row.get("eligibility_criteria", "")))
+        crit_words = crit_text.split()
+        structured["criteria_unique_ratio"] = len(set(crit_words)) / (len(crit_words) + 1) if crit_words else 0.0
 
         # --- Predict ---
         try:
@@ -838,7 +810,6 @@ def generate_demo_cache(
                 text=full_text,
                 structured_features=structured,
                 model=model,
-                embedder_fn=embedder_fn,
                 scaler=scaler,
                 threshold=threshold,
             )
@@ -959,16 +930,9 @@ def run_explainer_pipeline() -> dict:
     threshold = threshold_data["threshold"]
     logging.info(f"Optimal threshold: {threshold}")
 
-    # Load training data for explainer background
-    X_train_path = os.path.join(DATA_DIR, "X_train_combined.npy")
-    if os.path.exists(X_train_path):
-        X_train = np.load(X_train_path)
-    else:
-        # Fallback: reconstruct from parquet + embeddings
-        from trainer import load_feature_matrices, load_embeddings, build_combined_matrix
-        df_train, _ = load_feature_matrices()
-        emb_train, _ = load_embeddings()
-        X_train, _, _ = build_combined_matrix(df_train, emb_train)
+    from trainer import load_feature_matrices, build_feature_matrix
+    df_train, _ = load_feature_matrices()
+    X_train, _, _ = build_feature_matrix(df_train)
 
     logging.info(f"X_train shape: {X_train.shape}")
 
