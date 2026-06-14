@@ -34,8 +34,8 @@ def get_feature_labels() -> dict[str, str]:
         "has_randomized": "Is randomized",
         "has_multicenter": "Is multi-center study",
         "text_complexity": "Text complexity score",
-        "enrollment_to_phase_ratio": "Enrollment to phase ratio",
-        "criteria_word_density": "Criteria vocabulary density"
+        "enrollment_deficit": "Enrollment deficit vs phase avg",
+        "criteria_unique_ratio": "Criteria vocabulary uniqueness"
     }
 
 # ── CELL BREAK ──
@@ -107,21 +107,23 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     # 13. text_complexity: (criteria_length + title_length) / (outcome_count + 1)
     df_feat['text_complexity'] = (df_feat['criteria_length'] + df_feat['title_length']) / (df_feat['outcome_count'] + 1)
     
-    # 14. enrollment_to_phase_ratio: enrollment / (phase + 1)
-    enroll_raw = df.get('enrollment_count', pd.Series([0]*len(df))).fillna(0).astype(float)
-    phase_raw = df.get('phase_encoded', pd.Series([0]*len(df))).fillna(0).astype(float)
-    df_feat['enrollment_to_phase_ratio'] = enroll_raw / (phase_raw + 1)
+    # 14. enrollment_deficit: Phase expected vs actual
+    phase_enrollment_expected = {1.0: 30, 2.0: 150, 3.0: 500, 4.0: 1000}
+    df_feat['enrollment_deficit'] = df.apply(
+        lambda r: max(0, phase_enrollment_expected.get(float(r.get("phase_encoded", 0)) if pd.notna(r.get("phase_encoded")) else 150, 150) 
+                      - float(r.get("enrollment_count", 0) if pd.notna(r.get("enrollment_count")) else 0)), axis=1
+    ).astype(float)
     
-    # 15. criteria_word_density: unique words / total words in eligibility criteria
+    # 15. criteria_unique_ratio: unique words / total words in eligibility criteria
     def calc_density(text):
         if not text:
             return 0.0
         words = str(text).split()
         if not words:
             return 0.0
-        return len(set(words)) / len(words)
+        return len(set(words)) / (len(words) + 1)
         
-    df_feat['criteria_word_density'] = criteria.apply(calc_density).astype(float)
+    df_feat['criteria_unique_ratio'] = criteria.apply(calc_density).astype(float)
     
     return df_feat, full_text
 
@@ -158,7 +160,7 @@ def process_features():
     print(f"Test size: {len(df_test)} ({len(df_test)/len(df_feat):.1%})")
     
     # Scale specific continuous features on train split only
-    cols_to_scale = ['log_enrollment', 'criteria_length', 'title_length', 'text_complexity', 'enrollment_to_phase_ratio', 'criteria_word_density']
+    cols_to_scale = ['log_enrollment', 'criteria_length', 'title_length', 'text_complexity', 'enrollment_deficit', 'criteria_unique_ratio']
     
     print("Fitting and applying standard scaler...")
     scaler = StandardScaler()
