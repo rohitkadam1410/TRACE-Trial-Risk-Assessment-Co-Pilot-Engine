@@ -201,7 +201,7 @@ def benchmark_bert_embedding(
         print(f"{'='*50}")
 
         tokenizer = AutoTokenizer.from_pretrained(BERT_MODEL_NAME)
-        model = AutoModel.from_pretrained(BERT_MODEL_NAME).to(device)
+        model = AutoModel.from_pretrained(BERT_MODEL_NAME, use_safetensors=True).to(device)
 
         for bs in batch_sizes:
             print(f"  batch_size={bs:>3d} ... ", end="", flush=True)
@@ -299,7 +299,7 @@ def benchmark_full_pipeline(
 
         # ── Step 1: BERT embedding ──
         tokenizer = AutoTokenizer.from_pretrained(BERT_MODEL_NAME)
-        model = AutoModel.from_pretrained(BERT_MODEL_NAME).to(dev)
+        model = AutoModel.from_pretrained(BERT_MODEL_NAME, use_safetensors=True).to(dev)
 
         if dev_str == "cuda":
             torch.cuda.synchronize()

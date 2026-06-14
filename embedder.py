@@ -129,7 +129,7 @@ def extract_embeddings(
 
     logging.info(f"Loading tokenizer and model: {model_name}")
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModel.from_pretrained(model_name)
+    model = AutoModel.from_pretrained(model_name, use_safetensors=True)
     model.to(resolved_device)
     model.eval()  # Freeze all layers — no gradient computation needed
     logging.info("Model loaded and set to eval mode.")
