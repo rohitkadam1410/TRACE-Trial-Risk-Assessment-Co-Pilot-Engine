@@ -72,7 +72,6 @@ BENCHMARK_CHART_PATH: str = os.environ.get(
 BENCHMARK_SUMMARY_PATH: str = os.environ.get(
     "TRACE_BENCHMARK_SUMMARY", "artifacts/benchmark_summary.json"
 )
-DEMO_EMBEDDINGS_PATH: str = "demo/demo_embeddings.pkl"
 ERROR_LOG_PATH: str = "demo/app_errors.log"
 
 # Risk-tier color palette (shared with explainer.py)
@@ -137,7 +136,6 @@ _feature_names: Optional[list[str]] = None  # Ordered feature names (structured+
 _feature_labels: Optional[dict[str, str]] = None  # Raw name → human label
 _threshold: float = 0.5  # Optimal decision threshold
 _demo_trials: Optional[pd.DataFrame] = None  # 20 demo trial records
-_demo_embeddings: dict[str, np.ndarray] = {}  # nct_id → (768,) BERT CLS embedding
 _benchmark_summary: Optional[dict] = None  # Pitch-deck benchmark results
 _vllm_available: bool = False  # vLLM server connectivity
 _model_loaded: bool = False  # True when core ML artifacts are ready
@@ -237,7 +235,7 @@ def startup() -> str:
     global _demo_cache, _demo_cache_by_id, _copilot_cache
     global _model, _explainer, _scaler
     global _feature_meta, _feature_names, _feature_labels, _threshold
-    global _demo_trials, _demo_embeddings, _benchmark_summary
+    global _demo_trials, _benchmark_summary
     global _vllm_available, _model_loaded
     global _copilot_client, _copilot_backend
 
@@ -311,28 +309,6 @@ def startup() -> str:
         _demo_trials = None
         report.append("Demo trials: NOT LOADED ✗")
 
-    # ── 4. Pre-computed BERT embeddings for what-if ──
-    if os.path.exists(DEMO_EMBEDDINGS_PATH):
-        try:
-            _demo_embeddings = joblib.load(DEMO_EMBEDDINGS_PATH)
-            report.append(
-                f"Demo embeddings: {len(_demo_embeddings)} cached"
-            )
-        except Exception as exc:
-            logger.warning("Failed to load demo embeddings: %s", exc)
-            _demo_embeddings = {}
-
-    if not _demo_embeddings and _model_loaded and _demo_trials is not None:
-        _demo_embeddings = _precompute_demo_embeddings()
-        if _demo_embeddings:
-            report.append(
-                f"Demo embeddings: {len(_demo_embeddings)} computed & saved"
-            )
-
-    if not _demo_embeddings:
-        report.append(
-            "Demo embeddings: NOT AVAILABLE (what-if will use live BERT)"
-        )
 
     # ── 5. Benchmark summary ──
     _benchmark_summary = _load_json_safe(BENCHMARK_SUMMARY_PATH)
@@ -478,32 +454,37 @@ def _compute_structured_features(
         ),
         "has_multicenter": float(multicenter),
         "text_complexity": 0.0,  # computed below
+        "enrollment_deficit": 0.0,
+        "criteria_unique_ratio": 0.0,
     }
     features["text_complexity"] = (
         (features["criteria_length"] + features["title_length"])
         / (features["outcome_count"] + 1.0)
     )
+    phase_enrollment_expected = {1.0: 30, 2.0: 150, 3.0: 500, 4.0: 1000}
+    phase_val = features["phase_encoded"]
+    features["enrollment_deficit"] = max(0.0, phase_enrollment_expected.get(phase_val, 150.0) - float(enrollment))
+    
+    crit_words = criteria_text.split()
+    features["criteria_unique_ratio"] = float(len(set(crit_words)) / (len(crit_words) + 1.0)) if crit_words else 0.0
     return features
 
 
 def _build_feature_vector(
     structured: dict[str, float],
-    bert_embedding: np.ndarray,
 ) -> np.ndarray:
     """
-    Assemble the combined (structured + BERT) feature vector in the
+    Assemble the structured feature vector in the
     exact column order the model expects, with scaling applied.
 
     Parameters
     ----------
     structured : dict
         Raw (un-scaled) structured feature values.
-    bert_embedding : np.ndarray
-        (768,) BERT CLS embedding.
 
     Returns
     -------
-    np.ndarray  — shape (n_structured + 768,), float32
+    np.ndarray  — shape (n_structured,), float32
     """
     ordered_cols = [
         c for c in _feature_meta["columns"] if c != "terminated"
@@ -517,6 +498,7 @@ def _build_feature_vector(
     cols_to_scale = [
         "log_enrollment", "criteria_length",
         "title_length", "text_complexity",
+        "enrollment_deficit", "criteria_unique_ratio"
     ]
     scale_indices = [
         ordered_cols.index(c) for c in cols_to_scale if c in ordered_cols
@@ -525,10 +507,7 @@ def _build_feature_vector(
         vals = struct_array[scale_indices].reshape(1, -1)
         struct_array[scale_indices] = _scaler.transform(vals)[0]
 
-    if bert_embedding.ndim > 1:
-        bert_embedding = bert_embedding.squeeze()
-
-    return np.concatenate([struct_array, bert_embedding]).astype(np.float32)
+    return struct_array
 
 
 def _score_to_risk_tier(
@@ -760,7 +739,7 @@ def render_gpu_specs() -> str:
         'border-radius:8px;font-size:13px;color:#A0A0B0;line-height:1.6;">'
         "This bandwidth enables <strong style='color:#60A5FA;'>sub-100 ms "
         "per-protocol scoring</strong> at batch size 64.  The 192 GB HBM3 "
-        "allows loading BioClinicalBERT + vLLM (Mistral-7B) simultaneously "
+        "allows loading XGBoost + vLLM (Llama-3-70B) simultaneously "
         "without model swapping.</div></div>"
     )
 
@@ -987,24 +966,15 @@ def _run_live_scoring(
             plot_waterfall,
             attribution_to_natural_language,
         )
-        from embedder import extract_embeddings, get_device  # type: ignore
-
-        device = get_device("cuda")
         struct = _compute_structured_features(
             protocol_text, enrollment, phase, multicenter, has_placebo
         )
-
-        def embedder_fn(text: str) -> np.ndarray:
-            return extract_embeddings(
-                [text], batch_size=1, device=str(device)
-            )[0]
 
         t0 = time.perf_counter()
         result = predict_risk(
             text=protocol_text,
             structured_features=struct,
             model=_model,
-            embedder_fn=embedder_fn,
             scaler=_scaler,
             threshold=_threshold,
         )
@@ -1091,39 +1061,6 @@ def on_whatif_rescore(
     try:
         t0 = time.perf_counter()
 
-        # ── Obtain the cached BERT embedding ──
-        bert_emb: Optional[np.ndarray] = None
-
-        # Source 1: pre-computed demo embeddings dict
-        if nct_id in _demo_embeddings:
-            bert_emb = _demo_embeddings[nct_id]
-
-        # Source 2: feature vector stored in state (last 768 dims)
-        if bert_emb is None:
-            fv = state.get("feature_vector")
-            if fv is not None:
-                fv_arr = np.asarray(fv, dtype=np.float32)
-                if fv_arr.size > 768:
-                    bert_emb = fv_arr[-768:]
-
-        # Source 3: live BERT embedding (last resort)
-        if bert_emb is None:
-            try:
-                from embedder import extract_embeddings, get_device  # type: ignore
-
-                device = get_device("cuda")
-                bert_emb = extract_embeddings(
-                    [protocol_text], batch_size=1, device=str(device)
-                )[0]
-            except Exception as e:
-                logger.warning("Cannot get embedding for what-if: %s", e)
-                return (
-                    render_risk_gauge("—", 0.0, "#555555"),
-                    "<p style='color:#EF9F27;'>BERT embedding unavailable.</p>",
-                    "What-if requires a cached or computed embedding.",
-                    None, state,
-                )
-
         # ── Build modified structured features ──
         # Start from the originally computed features, override the 4 params
         base_feats = dict(state.get("structured_features", {}))
@@ -1139,7 +1076,7 @@ def on_whatif_rescore(
         # text_complexity unchanged — text-derived, not a what-if param
 
         # ── Score ──
-        feature_vector = _build_feature_vector(base_feats, bert_emb)
+        feature_vector = _build_feature_vector(base_feats)
         prob = float(
             _model.predict_proba(feature_vector.reshape(1, -1))[:, 1][0]
         )
@@ -1372,7 +1309,6 @@ def on_run_live_inference() -> str:
         )
     try:
         import torch
-        from embedder import extract_embeddings, get_device  # type: ignore
         from trainer import predict_risk  # type: ignore
 
         # Pick a random demo trial (or synthesize one)
@@ -1396,22 +1332,14 @@ def on_run_live_inference() -> str:
             nct_id = "NCT_LIVE"
             title = "Synthetic Demo Trial"
 
-        device = get_device("cuda")
+        device = "cuda" if torch.cuda.is_available() else "cpu"
         gpu_name = "AMD MI300X"
         if torch.cuda.is_available():
             gpu_name = torch.cuda.get_device_name(0)
 
-        # Warm-up pass (excluded from timing)
-        _ = extract_embeddings(["warmup"], batch_size=1, device=str(device))
-
         struct = _compute_structured_features(
             text, 100, "Phase 3", False, False
         )
-
-        def embedder_fn(t: str) -> np.ndarray:
-            return extract_embeddings(
-                [t], batch_size=1, device=str(device)
-            )[0]
 
         # ── Timed run ──
         t0 = time.perf_counter()
@@ -1419,7 +1347,6 @@ def on_run_live_inference() -> str:
             text=text,
             structured_features=struct,
             model=_model,
-            embedder_fn=embedder_fn,
             scaler=_scaler,
             threshold=_threshold,
         )
@@ -1449,7 +1376,7 @@ def on_run_live_inference() -> str:
             f'<div style="font-size:14px;font-weight:600;color:#E0E0F0;">'
             f"{gpu_name}</div></div></div>"
             '<div style="margin-top:14px;font-size:11px;color:#666;">'
-            "End-to-end: BERT embedding → XGBoost prediction → risk tier"
+            "End-to-end: Structured feature extraction → XGBoost prediction → risk tier"
             "</div></div>"
         )
     except Exception as exc:
