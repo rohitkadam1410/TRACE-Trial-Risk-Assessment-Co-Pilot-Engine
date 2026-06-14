@@ -144,7 +144,7 @@ def parse_and_preprocess(records: List[Dict[str, Any]]) -> pd.DataFrame:
         condition_count = len(conditions_list) if isinstance(conditions_list, list) else 1
         
         status_upper = status.upper()
-        if status_upper in ["WITHDRAWN", "SUSPENDED"]:
+        if status_upper in ["TERMINATED", "WITHDRAWN", "SUSPENDED"]:
             terminated = 1
         else:
             terminated = 0

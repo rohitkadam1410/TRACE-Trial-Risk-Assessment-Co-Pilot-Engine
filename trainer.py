@@ -228,16 +228,16 @@ def train_xgboost(
     scale_pos_weight = compute_scale_pos_weight(y_train)
 
     xgb_params = {
-        "n_estimators": 500,
-        "max_depth": 3,
-        "learning_rate": 0.03,
+        "n_estimators": 300,
+        "max_depth": 4,
+        "learning_rate": 0.05,
         "subsample": 0.8,
-        "colsample_bytree": 0.7,
-        "min_child_weight": 5,
+        "colsample_bytree": 0.8,
+        "min_child_weight": 3,
         "scale_pos_weight": scale_pos_weight,
         "use_label_encoder": False,
         "eval_metric": "auc",
-        "early_stopping_rounds": 50,
+        "early_stopping_rounds": 30,
         "random_state": 42,
         "tree_method": "hist",
         "n_jobs": -1,
