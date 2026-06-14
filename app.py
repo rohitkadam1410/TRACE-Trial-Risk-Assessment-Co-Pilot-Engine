@@ -529,14 +529,14 @@ def _score_to_risk_tier(
 # ---------------------------------------------------------------------------
 
 CUSTOM_CSS: str = """
-/* ── TRACE – Trial Risk Assessment & Co-Pilot Engine — Dark Theme ── */
+/* ── TRACE – Trial Risk Assessment & Co-Pilot Engine — Light Theme ── */
 
 .risk-gauge {
     text-align: center;
     padding: 28px 16px 20px;
     border-radius: 16px;
-    background: linear-gradient(145deg, rgba(15,17,23,0.92), rgba(30,33,44,0.92));
-    border: 1px solid rgba(255,255,255,0.07);
+    background: linear-gradient(145deg, rgba(255,255,255,0.92), rgba(249,250,251,0.92));
+    border: 1px solid rgba(0,0,0,0.07);
     margin-bottom: 12px;
     backdrop-filter: blur(8px);
 }
@@ -548,7 +548,7 @@ CUSTOM_CSS: str = """
     font-size: 68px; font-weight: 800; line-height: 1.05;
 }
 .risk-gauge .risk-bar-wrap {
-    width: 100%; height: 6px; background: rgba(255,255,255,0.08);
+    width: 100%; height: 6px; background: rgba(0,0,0,0.08);
     border-radius: 3px; overflow: hidden; margin-top: 14px;
 }
 .risk-gauge .risk-bar-fill {
@@ -569,8 +569,8 @@ CUSTOM_CSS: str = """
 .attr-table { width:100%; border-collapse:separate; border-spacing:0 5px; font-size:13px; }
 .attr-table th {
     text-align:left; padding:8px 12px; font-weight:600;
-    color:#8888AA; font-size:11px; text-transform:uppercase; letter-spacing:1px;
-    border-bottom:1px solid rgba(255,255,255,0.08);
+    color:#4B5563; font-size:11px; text-transform:uppercase; letter-spacing:1px;
+    border-bottom:1px solid rgba(0,0,0,0.08);
 }
 .attr-table td { padding:9px 12px; }
 .attr-table tr.inc td {
@@ -582,42 +582,42 @@ CUSTOM_CSS: str = """
 
 /* Benchmark cards */
 .bench-card {
-    background: linear-gradient(145deg, rgba(15,17,23,0.95), rgba(25,28,38,0.95));
-    border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:24px; margin-bottom:14px;
+    background: linear-gradient(145deg, rgba(255,255,255,0.95), rgba(249,250,251,0.95));
+    border:1px solid rgba(0,0,0,0.07); border-radius:16px; padding:24px; margin-bottom:14px;
 }
 .bench-stat {
     display:flex; justify-content:space-between; align-items:center;
-    padding:11px 0; border-bottom:1px solid rgba(255,255,255,0.05);
+    padding:11px 0; border-bottom:1px solid rgba(0,0,0,0.05);
 }
 .bench-stat:last-child { border-bottom:none; }
-.stat-lbl { color:#A0A0B0; font-size:14px; }
-.stat-val { font-size:26px; font-weight:700; color:#60A5FA; }
+.stat-lbl { color:#4B5563; font-size:14px; }
+.stat-val { font-size:26px; font-weight:700; color:#2563EB; }
 
 /* GPU spec card */
 .gpu-card {
-    background: linear-gradient(145deg, #1a1d2e, #0f1117);
-    border:1px solid rgba(96,165,250,0.18); border-radius:16px; padding:24px;
+    background: linear-gradient(145deg, #ffffff, #f9fafb);
+    border:1px solid rgba(37,99,235,0.18); border-radius:16px; padding:24px;
 }
 .gpu-title {
-    font-size:17px; font-weight:700; color:#60A5FA; margin-bottom:14px;
+    font-size:17px; font-weight:700; color:#2563EB; margin-bottom:14px;
     display:flex; align-items:center; gap:8px;
 }
 .gpu-row {
     display:flex; justify-content:space-between; padding:7px 0;
-    border-bottom:1px solid rgba(255,255,255,0.04);
+    border-bottom:1px solid rgba(0,0,0,0.04);
 }
 .gpu-row:last-child { border-bottom:none; }
-.gpu-k { color:#A0A0B0; font-size:13px; }
-.gpu-v { color:#E0E0F0; font-weight:600; font-size:13px; }
+.gpu-k { color:#4B5563; font-size:13px; }
+.gpu-v { color:#111827; font-weight:600; font-size:13px; }
 
 /* Live inference result */
 .live-card {
-    background: linear-gradient(145deg, rgba(29,158,117,0.12), rgba(15,17,23,0.92));
+    background: linear-gradient(145deg, rgba(29,158,117,0.12), rgba(255,255,255,0.92));
     border:1px solid rgba(29,158,117,0.25); border-radius:14px;
     padding:24px; text-align:center; animation: slideUp .45s ease-out;
 }
 .live-card.err {
-    background: linear-gradient(145deg, rgba(226,75,74,0.12), rgba(15,17,23,0.92));
+    background: linear-gradient(145deg, rgba(226,75,74,0.12), rgba(255,255,255,0.92));
     border-color: rgba(226,75,74,0.25);
 }
 """
@@ -1392,6 +1392,32 @@ def on_run_live_inference() -> str:
 
 # ---------------------------------------------------------------------------
 # UI Layout — gr.Blocks with three tabs
+def handle_file_upload(file_obj) -> str:
+    """Extract text from uploaded .txt, .pdf, or .docx files."""
+    if file_obj is None:
+        return ""
+    file_path = getattr(file_obj, "name", str(file_obj))
+    ext = os.path.splitext(file_path)[1].lower()
+    
+    try:
+        if ext == ".pdf":
+            import pypdf
+            reader = pypdf.PdfReader(file_path)
+            text = "\n".join(page.extract_text() for page in reader.pages if page.extract_text())
+            return text
+        elif ext == ".docx":
+            import docx
+            doc = docx.Document(file_path)
+            text = "\n".join(para.text for para in doc.paragraphs)
+            return text
+        else:
+            with open(file_path, "r", encoding="utf-8") as f:
+                return f.read()
+    except Exception as e:
+        logger.error(f"Failed to extract text from {file_path}: {e}")
+        return f"Error extracting text from file: {e}"
+
+
 # ---------------------------------------------------------------------------
 
 
@@ -1413,23 +1439,23 @@ def build_demo() -> gr.Blocks:
         neutral_hue=gr.themes.colors.slate,
         font=[gr.themes.GoogleFont("Inter"), "system-ui", "sans-serif"],
     ).set(
-        body_background_fill="#0F1117",
+        body_background_fill="#F9FAFB",
         body_background_fill_dark="#0F1117",
-        block_background_fill="#1A1D2E",
+        block_background_fill="#FFFFFF",
         block_background_fill_dark="#1A1D2E",
         block_border_width="1px",
-        block_border_color="rgba(255,255,255,0.06)",
-        block_label_text_color="#A0A0B0",
-        block_title_text_color="#E0E0F0",
-        input_background_fill="#252836",
+        block_border_color="rgba(0,0,0,0.1)",
+        block_label_text_color="#6B7280",
+        block_title_text_color="#111827",
+        input_background_fill="#F3F4F6",
         input_background_fill_dark="#252836",
-        input_border_color="rgba(255,255,255,0.1)",
+        input_border_color="rgba(0,0,0,0.1)",
         button_primary_background_fill="#3B82F6",
         button_primary_background_fill_hover="#2563EB",
         button_primary_text_color="#FFFFFF",
-        button_secondary_background_fill="#374151",
-        button_secondary_background_fill_hover="#4B5563",
-        button_secondary_text_color="#E0E0F0",
+        button_secondary_background_fill="#E5E7EB",
+        button_secondary_background_fill_hover="#D1D5DB",
+        button_secondary_text_color="#111827",
     )
 
     with gr.Blocks(
@@ -1473,13 +1499,18 @@ def build_demo() -> gr.Blocks:
                             interactive=True,
                             elem_id="demo_trial_dropdown",
                         )
+                        protocol_file = gr.File(
+                            label="📄 Upload Protocol (TXT/PDF/DOCX)",
+                            file_types=[".txt", ".pdf", ".docx"],
+                            elem_id="protocol_file_upload",
+                        )
                         protocol_text = gr.Textbox(
                             label="Protocol text",
                             placeholder=(
-                                "Select a demo trial or paste protocol "
+                                "Select a demo trial, upload a file, or paste protocol "
                                 "text here …"
                             ),
-                            lines=8,
+                            lines=6,
                             max_lines=15,
                             elem_id="protocol_text",
                         )
