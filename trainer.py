@@ -341,6 +341,10 @@ def calibrate_model(
     logging.info("Calibrating model (isotonic, 5-fold CV on train) …")
     t0 = time.perf_counter()
 
+    # Disable early stopping for the internal calibration CV folds
+    # since CalibratedClassifierCV does not pass an eval_set during fit()
+    model.set_params(early_stopping_rounds=None)
+
     calibrated = CalibratedClassifierCV(
         estimator=model,
         method="isotonic",
