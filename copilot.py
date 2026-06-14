@@ -69,7 +69,7 @@ ANTHROPIC_FALLBACK_MODEL: str = "claude-3-5-haiku-latest"
 
 
 def start_vllm_server(
-    model_name: str = "mistralai/Mistral-7B-Instruct-v0.2",
+    model_name: str = "meta-llama/Meta-Llama-3-70B-Instruct",
     port: int = 8000,
     max_model_len: int = 4096,
     gpu_memory_utilization: float = 0.85,
@@ -81,9 +81,9 @@ def start_vllm_server(
     and polls ``GET /health`` until the server is ready or the timeout expires.
 
     Args:
-        model_name: HuggingFace model ID. Mistral-7B-Instruct chosen for fast
-            cold start (~45 s on MI300X vs ~90 s for Llama-3-8B) and stable
-            ROCm support under vLLM.
+        model_name: HuggingFace model ID. Meta-Llama-3-70B-Instruct chosen to 
+            showcase MI300X's massive 192GB memory capacity (a single A100 cannot 
+            run 70B at full precision without quantization).
         port: TCP port for the OpenAI-compatible API.
         max_model_len: Maximum context length in tokens.
         gpu_memory_utilization: Fraction of GPU HBM to allocate (0.85 leaves
@@ -676,7 +676,7 @@ class CopilotSession:
 
     def __init__(
         self,
-        model_name: str = "mistralai/Mistral-7B-Instruct-v0.2",
+        model_name: str = "meta-llama/Meta-Llama-3-70B-Instruct",
         vllm_port: int = 8000,
         max_model_len: int = 4096,
         gpu_memory_utilization: float = 0.85,
@@ -950,7 +950,7 @@ if __name__ == "__main__":
 #
 # CONSTANTS THE CALLER MUST KNOW:
 #   - Default vLLM port: 8000
-#   - Default model: mistralai/Mistral-7B-Instruct-v0.2
+#   - Default model: meta-llama/Meta-Llama-3-70B-Instruct
 #   - Anthropic fallback model: claude-3-5-haiku-latest
 #
 # HOW THE GRADIO APP SHOULD USE THIS MODULE:
