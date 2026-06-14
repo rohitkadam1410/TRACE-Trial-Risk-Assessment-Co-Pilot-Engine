@@ -59,7 +59,7 @@ SYSTEM_PROMPT_WHATIF: str = (
 )
 
 # Anthropic fallback model — used when vLLM is unavailable
-ANTHROPIC_FALLBACK_MODEL: str = "claude-3-5-haiku-latest"
+ANTHROPIC_FALLBACK_MODEL: str = "claude-3-5-sonnet-latest"
 
 # ── CELL BREAK ──
 
@@ -951,7 +951,7 @@ if __name__ == "__main__":
 # CONSTANTS THE CALLER MUST KNOW:
 #   - Default vLLM port: 8000
 #   - Default model: meta-llama/Meta-Llama-3-70B-Instruct
-#   - Anthropic fallback model: claude-3-5-haiku-latest
+#   - Anthropic fallback model: claude-3-5-sonnet-latest
 #
 # HOW THE GRADIO APP SHOULD USE THIS MODULE:
 #
