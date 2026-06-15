@@ -383,6 +383,7 @@ def startup() -> str:
 
 def _compute_structured_features(
     protocol_text: str,
+    study_title: str,
     enrollment: int,
     phase: str,
     multicenter: bool,
@@ -412,9 +413,9 @@ def _compute_structured_features(
             criteria_text = protocol_text[idx:]
             break
 
-    # Extract title from row or first line
-    title = ""
-    if row is not None:
+    # Extract title
+    title = study_title
+    if (not title or title == "nan") and row is not None:
         title = str(
             row.get("officialTitle",
                      row.get("official_title", ""))
@@ -541,96 +542,91 @@ def _score_to_risk_tier(
 # ---------------------------------------------------------------------------
 
 CUSTOM_CSS: str = """
-/* ── TRACE – Trial Risk Assessment & Co-Pilot Engine — Light Theme ── */
+/* ── TRACE – Premium Dark Theme ── */
+body, .gradio-container {
+    background: radial-gradient(circle at 10% 20%, rgba(13,15,36,1) 0%, rgba(20,25,50,1) 100%) !important;
+    color: #e2e8f0;
+}
 
 .risk-gauge {
     text-align: center;
-    padding: 28px 16px 20px;
-    border-radius: 16px;
-    background: linear-gradient(145deg, rgba(255,255,255,0.92), rgba(249,250,251,0.92));
-    border: 1px solid rgba(0,0,0,0.07);
-    margin-bottom: 12px;
-    backdrop-filter: blur(8px);
+    padding: 32px 16px;
+    border-radius: 20px;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    margin-bottom: 16px;
+    transition: transform 0.3s ease;
 }
+.risk-gauge:hover { transform: translateY(-4px); }
 .risk-gauge .tier-label {
-    font-size: 18px; font-weight: 700; letter-spacing: 3px;
-    text-transform: uppercase; margin-bottom: 2px;
+    font-size: 18px; font-weight: 700; letter-spacing: 4px;
+    text-transform: uppercase; margin-bottom: 8px;
+    text-shadow: 0 0 10px currentColor;
 }
 .risk-gauge .risk-pct {
-    font-size: 68px; font-weight: 800; line-height: 1.05;
+    font-size: 72px; font-weight: 800; line-height: 1;
+    background: linear-gradient(135deg, currentColor, #ffffff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 12px rgba(255,255,255,0.2));
 }
 .risk-gauge .risk-bar-wrap {
-    width: 100%; height: 6px; background: rgba(0,0,0,0.08);
-    border-radius: 3px; overflow: hidden; margin-top: 14px;
+    width: 100%; height: 8px; background: rgba(255,255,255,0.05);
+    border-radius: 4px; overflow: hidden; margin-top: 18px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
 }
 .risk-gauge .risk-bar-fill {
-    height: 100%; border-radius: 3px;
-    transition: width 0.5s cubic-bezier(.4,0,.2,1);
+    height: 100%; border-radius: 4px;
+    transition: width 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 0 10px currentColor;
 }
 .delta-badge {
-    display: inline-block; padding: 8px 18px; border-radius: 8px;
-    font-weight: 600; font-size: 14px; margin-top: 14px;
-    animation: slideUp .35s ease-out;
+    display: inline-block; padding: 6px 16px; border-radius: 20px;
+    font-weight: 600; font-size: 13px; margin-top: 18px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    animation: fadeIn 0.5s ease-out;
 }
-@keyframes slideUp {
-    from { opacity:0; transform:translateY(6px); }
-    to   { opacity:1; transform:translateY(0);   }
-}
+@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
 
 /* Attribution table */
-.attr-table { width:100%; border-collapse:separate; border-spacing:0 5px; font-size:13px; }
+.attr-table { width:100%; border-collapse:separate; border-spacing:0 6px; font-size:14px; }
 .attr-table th {
-    text-align:left; padding:8px 12px; font-weight:600;
-    color:#4B5563; font-size:11px; text-transform:uppercase; letter-spacing:1px;
-    border-bottom:1px solid rgba(0,0,0,0.08);
+    text-align:left; padding:10px 14px; font-weight:600;
+    color:#94a3b8; font-size:12px; text-transform:uppercase; letter-spacing:1px;
 }
-.attr-table td { padding:9px 12px; }
-.attr-table tr.inc td {
-    background:rgba(226,75,74,0.10); border-left:3px solid #E24B4A; border-radius:6px;
-}
-.attr-table tr.dec td {
-    background:rgba(29,158,117,0.10); border-left:3px solid #1D9E75; border-radius:6px;
-}
+.attr-table td { padding:12px 14px; background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(4px); }
+.attr-table tr:hover td { background: rgba(30, 41, 59, 0.8); }
+.attr-table tr.inc td:first-child { border-top-left-radius:8px; border-bottom-left-radius:8px; border-left:4px solid #f87171; }
+.attr-table tr.inc td:last-child { border-top-right-radius:8px; border-bottom-right-radius:8px; }
+.attr-table tr.dec td:first-child { border-top-left-radius:8px; border-bottom-left-radius:8px; border-left:4px solid #34d399; }
+.attr-table tr.dec td:last-child { border-top-right-radius:8px; border-bottom-right-radius:8px; }
 
-/* Benchmark cards */
-.bench-card {
-    background: linear-gradient(145deg, rgba(255,255,255,0.95), rgba(249,250,251,0.95));
-    border:1px solid rgba(0,0,0,0.07); border-radius:16px; padding:24px; margin-bottom:14px;
+/* Premium Cards */
+.bench-card, .gpu-card, .live-card {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px; padding: 28px; margin-bottom: 16px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    backdrop-filter: blur(16px);
+    transition: transform 0.3s ease;
 }
-.bench-stat {
-    display:flex; justify-content:space-between; align-items:center;
-    padding:11px 0; border-bottom:1px solid rgba(0,0,0,0.05);
-}
-.bench-stat:last-child { border-bottom:none; }
-.stat-lbl { color:#4B5563; font-size:14px; }
-.stat-val { font-size:26px; font-weight:700; color:#2563EB; }
+.bench-card:hover, .gpu-card:hover { transform: translateY(-4px); }
+.stat-lbl { color: #94a3b8; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+.stat-val { font-size: 28px; font-weight: 800; color: #60a5fa; text-shadow: 0 0 10px rgba(96, 165, 250, 0.4); }
+.gpu-title { font-size:18px; font-weight:800; color:#c084fc; margin-bottom:16px; display:flex; align-items:center; gap:8px; text-shadow: 0 0 10px rgba(192, 132, 252, 0.4); }
+.gpu-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05); }
+.gpu-k { color:#94a3b8; font-size:14px; }
+.gpu-v { color:#f8fafc; font-weight:700; font-size:14px; }
 
-/* GPU spec card */
-.gpu-card {
-    background: linear-gradient(145deg, #ffffff, #f9fafb);
-    border:1px solid rgba(37,99,235,0.18); border-radius:16px; padding:24px;
-}
-.gpu-title {
-    font-size:17px; font-weight:700; color:#2563EB; margin-bottom:14px;
-    display:flex; align-items:center; gap:8px;
-}
-.gpu-row {
-    display:flex; justify-content:space-between; padding:7px 0;
-    border-bottom:1px solid rgba(0,0,0,0.04);
-}
-.gpu-row:last-child { border-bottom:none; }
-.gpu-k { color:#4B5563; font-size:13px; }
-.gpu-v { color:#111827; font-weight:600; font-size:13px; }
-
-/* Live inference result */
-.live-card {
-    background: linear-gradient(145deg, rgba(29,158,117,0.12), rgba(255,255,255,0.92));
-    border:1px solid rgba(29,158,117,0.25); border-radius:14px;
-    padding:24px; text-align:center; animation: slideUp .45s ease-out;
-}
-.live-card.err {
-    background: linear-gradient(145deg, rgba(226,75,74,0.12), rgba(255,255,255,0.92));
-    border-color: rgba(226,75,74,0.25);
+/* Gradients for headings */
+h1 {
+    background: linear-gradient(135deg, #60A5FA, #C084FC) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    text-shadow: none !important;
 }
 """
 
@@ -876,8 +872,9 @@ def on_demo_trial_selected(choice: str) -> tuple:
     )
 
     # Compute structured features for state (used by what-if later)
+    study_title = trial.get("title", "")
     struct_feats = _compute_structured_features(
-        protocol_text, enrollment, phase_str, multicenter, placebo, row
+        protocol_text, study_title, enrollment, phase_str, multicenter, placebo, row
     )
 
     state = {
@@ -897,13 +894,14 @@ def on_demo_trial_selected(choice: str) -> tuple:
     }
 
     return (
-        protocol_text, enrollment, phase_str, multicenter, placebo,
+        protocol_text, study_title, enrollment, phase_str, multicenter, placebo,
         gauge_html, attr_html, summary, waterfall_img, state,
     )
 
 
 def on_score_risk(
     protocol_text: str,
+    study_title: str,
     enrollment: int,
     phase: str,
     multicenter: bool,
@@ -952,12 +950,14 @@ def on_score_risk(
 
     # ── Live inference path ──
     return _run_live_scoring(
-        protocol_text, enrollment, phase, multicenter, has_placebo, state
+        nct_id, protocol_text, study_title, enrollment, phase, multicenter, has_placebo, state
     )
 
 
 def _run_live_scoring(
+    nct_id: str,
     protocol_text: str,
+    study_title: str,
     enrollment: int,
     phase: str,
     multicenter: bool,
@@ -978,8 +978,9 @@ def _run_live_scoring(
             plot_waterfall,
             attribution_to_natural_language,
         )
+        # ── Feature extraction ──
         struct = _compute_structured_features(
-            protocol_text, enrollment, phase, multicenter, has_placebo
+            protocol_text, study_title, enrollment, phase, multicenter, has_placebo
         )
 
         t0 = time.perf_counter()
@@ -1058,6 +1059,7 @@ def _run_live_scoring(
 
 def on_whatif_rescore(
     protocol_text: str,
+    study_title: str,
     enrollment: int,
     phase: str,
     multicenter: bool,
@@ -1093,7 +1095,7 @@ def on_whatif_rescore(
         base_feats = dict(state.get("structured_features", {}))
         if not base_feats:
             base_feats = _compute_structured_features(
-                protocol_text, enrollment, phase, multicenter, has_placebo
+                protocol_text, study_title, enrollment, phase, multicenter, has_placebo
             )
 
         base_feats["log_enrollment"] = float(np.log1p(enrollment))
@@ -1424,30 +1426,110 @@ def on_run_live_inference() -> str:
 
 # ---------------------------------------------------------------------------
 # UI Layout — gr.Blocks with three tabs
-def handle_file_upload(file_obj) -> str:
-    """Extract text from uploaded .txt, .pdf, or .docx files."""
+def handle_file_upload(file_obj) -> tuple:
+    """
+    Extract trial parameters from uploaded files.
+    Returns: (protocol_text, study_title, enrollment, phase_str, multicenter_bool, placebo_bool)
+    """
+    default_ret = ("", "", 100, "Phase 2", False, False)
     if file_obj is None:
-        return ""
+        return default_ret
+        
     file_path = getattr(file_obj, "name", str(file_obj))
     ext = os.path.splitext(file_path)[1].lower()
     
+    text = ""
+    title = ""
+    enrollment = 100
+    phase_str = "Phase 2"
+    multicenter = False
+    placebo = False
+    
     try:
-        if ext == ".pdf":
+        if ext == ".json":
+            # Parse FHIR ResearchStudy format
+            with open(file_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                
+            # If it's a FHIR bundle, extract the first ResearchStudy
+            if data.get("resourceType") == "Bundle":
+                for entry in data.get("entry", []):
+                    res = entry.get("resource", {})
+                    if res.get("resourceType") == "ResearchStudy":
+                        data = res
+                        break
+            
+            title = data.get("title", "")
+            text = data.get("description", "")
+            if not text and "objective" in data:
+                text = str(data.get("objective"))
+            
+            # Simple heuristic extractions from FHIR or generic JSON
+            enroll_data = data.get("enrollment", [])
+            if enroll_data and isinstance(enroll_data, list):
+                # FHIR usually links to a Group, but sometimes encodes direct numbers
+                if "actual" in enroll_data[0]:
+                    enrollment = int(enroll_data[0].get("actual", 100))
+            elif "enrollment_count" in data:
+                enrollment = int(data["enrollment_count"])
+                
+            if "phase" in data:
+                val = str(data["phase"])
+                if "1" in val: phase_str = "Phase 1"
+                if "2" in val: phase_str = "Phase 2"
+                if "3" in val: phase_str = "Phase 3"
+                if "4" in val: phase_str = "Phase 4"
+                
+            text_lower = text.lower()
+            multicenter = "multicenter" in text_lower or "multi-center" in text_lower
+            placebo = "placebo" in text_lower
+            
+        elif ext == ".csv":
+            df = pd.read_csv(file_path)
+            if not df.empty:
+                row = df.iloc[0]
+                text = str(row.get("full_text", row.get("description", "")))
+                title = str(row.get("officialTitle", row.get("title", "")))
+                
+                enroll_val = row.get("enrollment_count", row.get("enrollment", 100))
+                enrollment = int(enroll_val) if pd.notna(enroll_val) else 100
+                
+                phase_val = row.get("phase_encoded", row.get("phase", 2))
+                if pd.notna(phase_val):
+                    phase_str = f"Phase {int(phase_val)}" if isinstance(phase_val, (int, float)) else str(phase_val)
+                
+                mc_val = row.get("has_multicenter", row.get("multicenter", False))
+                multicenter = bool(mc_val) if pd.notna(mc_val) else False
+                
+                pl_val = row.get("has_placebo", row.get("placebo", False))
+                placebo = bool(pl_val) if pd.notna(pl_val) else False
+                
+        elif ext == ".pdf":
             import pypdf
             reader = pypdf.PdfReader(file_path)
             text = "\n".join(page.extract_text() for page in reader.pages if page.extract_text())
-            return text
         elif ext == ".docx":
             import docx
             doc = docx.Document(file_path)
             text = "\n".join(para.text for para in doc.paragraphs)
-            return text
         else:
             with open(file_path, "r", encoding="utf-8") as f:
-                return f.read()
+                text = f.read()
+                
+        # Fallbacks for text files
+        if not title:
+            lines = text.strip().split("\n")
+            if lines: title = lines[0][:150]
+            
+        tl = text.lower()
+        if not multicenter and "multicenter" in tl: multicenter = True
+        if not placebo and "placebo" in tl: placebo = True
+        
+        return (text, title, enrollment, phase_str, multicenter, placebo)
+        
     except Exception as e:
-        logger.error(f"Failed to extract text from {file_path}: {e}")
-        return f"Error extracting text from file: {e}"
+        logger.error(f"Failed to extract trial parameters from {file_path}: {e}")
+        return (f"Error: {e}", "", 100, "Phase 2", False, False)
 
 
 # ---------------------------------------------------------------------------
@@ -1471,23 +1553,23 @@ def build_demo() -> gr.Blocks:
         neutral_hue=gr.themes.colors.slate,
         font=[gr.themes.GoogleFont("Inter"), "system-ui", "sans-serif"],
     ).set(
-        body_background_fill="#F9FAFB",
-        body_background_fill_dark="#0F1117",
-        block_background_fill="#FFFFFF",
-        block_background_fill_dark="#1A1D2E",
+        body_background_fill="#0B0F19",
+        body_background_fill_dark="#0B0F19",
+        block_background_fill="rgba(15, 23, 42, 0.6)",
+        block_background_fill_dark="rgba(15, 23, 42, 0.6)",
         block_border_width="1px",
-        block_border_color="rgba(0,0,0,0.1)",
-        block_label_text_color="#6B7280",
-        block_title_text_color="#111827",
-        input_background_fill="#F3F4F6",
-        input_background_fill_dark="#252836",
-        input_border_color="rgba(0,0,0,0.1)",
-        button_primary_background_fill="#3B82F6",
-        button_primary_background_fill_hover="#2563EB",
+        block_border_color="rgba(255,255,255,0.05)",
+        block_label_text_color="#94a3b8",
+        block_title_text_color="#f8fafc",
+        input_background_fill="rgba(255,255,255,0.03)",
+        input_background_fill_dark="rgba(255,255,255,0.03)",
+        input_border_color="rgba(255,255,255,0.1)",
+        button_primary_background_fill="linear-gradient(135deg, #3B82F6, #8B5CF6)",
+        button_primary_background_fill_hover="linear-gradient(135deg, #2563EB, #7C3AED)",
         button_primary_text_color="#FFFFFF",
-        button_secondary_background_fill="#E5E7EB",
-        button_secondary_background_fill_hover="#D1D5DB",
-        button_secondary_text_color="#111827",
+        button_secondary_background_fill="rgba(255,255,255,0.05)",
+        button_secondary_background_fill_hover="rgba(255,255,255,0.1)",
+        button_secondary_text_color="#e2e8f0",
     )
 
     with gr.Blocks(
@@ -1532,9 +1614,15 @@ def build_demo() -> gr.Blocks:
                             elem_id="demo_trial_dropdown",
                         )
                         protocol_file = gr.File(
-                            label="📄 Upload Protocol (TXT/PDF/DOCX)",
-                            file_types=[".txt", ".pdf", ".docx"],
+                            label="📄 Upload Protocol (JSON/CSV/TXT/PDF/DOCX)",
+                            file_types=[".json", ".csv", ".txt", ".pdf", ".docx"],
                             elem_id="protocol_file_upload",
+                        )
+                        study_title = gr.Textbox(
+                            label="Study Name / Title",
+                            placeholder="Enter the official trial title...",
+                            lines=1,
+                            elem_id="study_title",
                         )
                         protocol_text = gr.Textbox(
                             label="Protocol text",
@@ -1629,16 +1717,25 @@ def build_demo() -> gr.Blocks:
                     fn=on_demo_trial_selected,
                     inputs=[demo_dropdown],
                     outputs=[
-                        protocol_text, enrollment_slider, phase_dropdown,
+                        protocol_text, study_title, enrollment_slider, phase_dropdown,
                         multicenter_chk, placebo_chk,
                         *_right_outputs,
                     ],
                 )
 
+                protocol_file.upload(
+                    fn=handle_file_upload,
+                    inputs=[protocol_file],
+                    outputs=[
+                        protocol_text, study_title, enrollment_slider, 
+                        phase_dropdown, multicenter_chk, placebo_chk
+                    ]
+                )
+
                 score_btn.click(
                     fn=on_score_risk,
                     inputs=[
-                        protocol_text, enrollment_slider, phase_dropdown,
+                        protocol_text, study_title, enrollment_slider, phase_dropdown,
                         multicenter_chk, placebo_chk,
                         live_toggle, app_state,
                     ],
@@ -1648,7 +1745,7 @@ def build_demo() -> gr.Blocks:
                 whatif_btn.click(
                     fn=on_whatif_rescore,
                     inputs=[
-                        protocol_text, enrollment_slider, phase_dropdown,
+                        protocol_text, study_title, enrollment_slider, phase_dropdown,
                         multicenter_chk, placebo_chk, app_state,
                     ],
                     outputs=_right_outputs,
@@ -1738,7 +1835,7 @@ def build_demo() -> gr.Blocks:
                     ).then(
                         fn=on_whatif_rescore,
                         inputs=[
-                            protocol_text, enrollment_slider,
+                            protocol_text, study_title, enrollment_slider,
                             phase_dropdown, multicenter_chk,
                             placebo_chk, app_state,
                         ],
