@@ -539,95 +539,134 @@ def _score_to_risk_tier(
 
 # ---------------------------------------------------------------------------
 # HTML rendering helpers
-# ---------------------------------------------------------------------------
-
 CUSTOM_CSS: str = """
-/* ── TRACE – Premium Dark Theme ── */
+/* ── TRACE – Premium Enterprise Light Theme & Sidebar ── */
 body, .gradio-container {
-    background: radial-gradient(circle at 10% 20%, rgba(13,15,36,1) 0%, rgba(20,25,50,1) 100%) !important;
-    color: #e2e8f0;
+    background: #f8fafc !important;
+    color: #1e293b;
+    font-family: 'Inter', system-ui, sans-serif !important;
 }
 
+/* Sidebar Navigation Overrides */
+div.tabs {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 32px;
+    background: transparent !important;
+}
+div.tab-nav {
+    display: flex !important;
+    flex-direction: column !important;
+    min-width: 260px !important;
+    border-right: 1px solid #e2e8f0 !important;
+    border-bottom: none !important;
+    margin-bottom: 0 !important;
+    padding-right: 24px;
+    background: transparent !important;
+}
+div.tab-nav > button {
+    text-align: left !important;
+    padding: 14px 20px !important;
+    border: 1px solid transparent !important;
+    border-radius: 8px !important;
+    margin-bottom: 8px !important;
+    background: transparent !important;
+    color: #475569 !important;
+    font-weight: 500 !important;
+    font-size: 15px !important;
+    transition: all 0.2s ease;
+}
+div.tab-nav > button:hover {
+    background: #f1f5f9 !important;
+}
+div.tab-nav > button.selected {
+    background: #eff6ff !important;
+    color: #2563eb !important;
+    font-weight: 600 !important;
+    border: 1px solid #bfdbfe !important;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+div.tabitem {
+    flex-grow: 1 !important;
+    border: none !important;
+    padding: 0 !important;
+    background: transparent !important;
+}
+
+/* Header Adjustments */
+h1 {
+    color: #0f172a !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.5px;
+    background: none !important;
+    -webkit-text-fill-color: #0f172a !important;
+}
+
+/* Premium Cards */
+.bench-card, .gpu-card, .live-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px; 
+    padding: 24px; 
+    margin-bottom: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    transition: box-shadow 0.2s ease;
+}
+.bench-card:hover, .gpu-card:hover { 
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); 
+}
+
+/* Risk Gauge */
 .risk-gauge {
     text-align: center;
     padding: 32px 16px;
-    border-radius: 20px;
-    background: rgba(15, 23, 42, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    border-radius: 12px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     margin-bottom: 16px;
-    transition: transform 0.3s ease;
 }
-.risk-gauge:hover { transform: translateY(-4px); }
 .risk-gauge .tier-label {
-    font-size: 18px; font-weight: 700; letter-spacing: 4px;
+    font-size: 16px; font-weight: 700; letter-spacing: 2px;
     text-transform: uppercase; margin-bottom: 8px;
-    text-shadow: 0 0 10px currentColor;
+    color: #475569;
 }
 .risk-gauge .risk-pct {
     font-size: 72px; font-weight: 800; line-height: 1;
-    background: linear-gradient(135deg, currentColor, #ffffff);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    filter: drop-shadow(0 0 12px rgba(255,255,255,0.2));
+    color: #0f172a;
 }
 .risk-gauge .risk-bar-wrap {
-    width: 100%; height: 8px; background: rgba(255,255,255,0.05);
+    width: 100%; height: 8px; background: #f1f5f9;
     border-radius: 4px; overflow: hidden; margin-top: 18px;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+    border: 1px solid #e2e8f0;
 }
 .risk-gauge .risk-bar-fill {
     height: 100%; border-radius: 4px;
     transition: width 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    box-shadow: 0 0 10px currentColor;
 }
+
+/* Badges and Tables */
 .delta-badge {
     display: inline-block; padding: 6px 16px; border-radius: 20px;
     font-weight: 600; font-size: 13px; margin-top: 18px;
-    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-    animation: fadeIn 0.5s ease-out;
+    background: #f8fafc; border: 1px solid #e2e8f0; color: #475569;
 }
-@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
-
-/* Attribution table */
-.attr-table { width:100%; border-collapse:separate; border-spacing:0 6px; font-size:14px; }
+.attr-table { width:100%; border-collapse:separate; border-spacing:0 4px; font-size:14px; }
 .attr-table th {
     text-align:left; padding:10px 14px; font-weight:600;
-    color:#94a3b8; font-size:12px; text-transform:uppercase; letter-spacing:1px;
+    color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;
+    border-bottom: 1px solid #e2e8f0;
 }
-.attr-table td { padding:12px 14px; background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(4px); }
-.attr-table tr:hover td { background: rgba(30, 41, 59, 0.8); }
-.attr-table tr.inc td:first-child { border-top-left-radius:8px; border-bottom-left-radius:8px; border-left:4px solid #f87171; }
-.attr-table tr.inc td:last-child { border-top-right-radius:8px; border-bottom-right-radius:8px; }
-.attr-table tr.dec td:first-child { border-top-left-radius:8px; border-bottom-left-radius:8px; border-left:4px solid #34d399; }
-.attr-table tr.dec td:last-child { border-top-right-radius:8px; border-bottom-right-radius:8px; }
+.attr-table td { padding:12px 14px; background: #ffffff; border: 1px solid #f1f5f9; }
+.attr-table tr.inc td:first-child { border-left: 4px solid #ef4444; }
+.attr-table tr.dec td:first-child { border-left: 4px solid #10b981; }
 
-/* Premium Cards */
-.bench-card, .gpu-card, .live-card {
-    background: rgba(15, 23, 42, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 20px; padding: 28px; margin-bottom: 16px;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    backdrop-filter: blur(16px);
-    transition: transform 0.3s ease;
-}
-.bench-card:hover, .gpu-card:hover { transform: translateY(-4px); }
-.stat-lbl { color: #94a3b8; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
-.stat-val { font-size: 28px; font-weight: 800; color: #60a5fa; text-shadow: 0 0 10px rgba(96, 165, 250, 0.4); }
-.gpu-title { font-size:18px; font-weight:800; color:#c084fc; margin-bottom:16px; display:flex; align-items:center; gap:8px; text-shadow: 0 0 10px rgba(192, 132, 252, 0.4); }
-.gpu-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05); }
-.gpu-k { color:#94a3b8; font-size:14px; }
-.gpu-v { color:#f8fafc; font-weight:700; font-size:14px; }
-
-/* Gradients for headings */
-h1 {
-    background: linear-gradient(135deg, #60A5FA, #C084FC) !important;
-    -webkit-background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
-    text-shadow: none !important;
-}
+.stat-lbl { color: #64748b; font-size: 13px; text-transform: uppercase; font-weight: 600; }
+.stat-val { font-size: 24px; font-weight: 700; color: #2563eb; }
+.gpu-title { font-size:16px; font-weight:700; color:#334155; margin-bottom:16px; display:flex; align-items:center; gap:8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; }
+.gpu-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f1f5f9; }
+.gpu-k { color:#64748b; font-size:14px; }
+.gpu-v { color:#0f172a; font-weight:600; font-size:14px; }
 """
 
 
@@ -1553,23 +1592,23 @@ def build_demo() -> gr.Blocks:
         neutral_hue=gr.themes.colors.slate,
         font=[gr.themes.GoogleFont("Inter"), "system-ui", "sans-serif"],
     ).set(
-        body_background_fill="#0B0F19",
-        body_background_fill_dark="#0B0F19",
-        block_background_fill="rgba(15, 23, 42, 0.6)",
-        block_background_fill_dark="rgba(15, 23, 42, 0.6)",
+        body_background_fill="#f8fafc",
+        body_background_fill_dark="#f8fafc",
+        block_background_fill="#ffffff",
+        block_background_fill_dark="#ffffff",
         block_border_width="1px",
-        block_border_color="rgba(255,255,255,0.05)",
-        block_label_text_color="#94a3b8",
-        block_title_text_color="#f8fafc",
-        input_background_fill="rgba(255,255,255,0.03)",
-        input_background_fill_dark="rgba(255,255,255,0.03)",
-        input_border_color="rgba(255,255,255,0.1)",
-        button_primary_background_fill="linear-gradient(135deg, #3B82F6, #8B5CF6)",
-        button_primary_background_fill_hover="linear-gradient(135deg, #2563EB, #7C3AED)",
-        button_primary_text_color="#FFFFFF",
-        button_secondary_background_fill="rgba(255,255,255,0.05)",
-        button_secondary_background_fill_hover="rgba(255,255,255,0.1)",
-        button_secondary_text_color="#e2e8f0",
+        block_border_color="#e2e8f0",
+        block_label_text_color="#64748b",
+        block_title_text_color="#0f172a",
+        input_background_fill="#ffffff",
+        input_background_fill_dark="#ffffff",
+        input_border_color="#cbd5e1",
+        button_primary_background_fill="#2563eb",
+        button_primary_background_fill_hover="#1d4ed8",
+        button_primary_text_color="#ffffff",
+        button_secondary_background_fill="#f1f5f9",
+        button_secondary_background_fill_hover="#e2e8f0",
+        button_secondary_text_color="#334155",
     )
 
     with gr.Blocks(
