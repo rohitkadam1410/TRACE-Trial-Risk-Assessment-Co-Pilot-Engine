@@ -93,9 +93,9 @@ def train():
     train_ds = TrialDataset(df_train, tokenizer)
     test_ds  = TrialDataset(df_test,  tokenizer)
     train_dl = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True,
-                          num_workers=4, pin_memory=True)
+                          num_workers=0, pin_memory=True)
     test_dl  = DataLoader(test_ds,  batch_size=BATCH_SIZE, shuffle=False,
-                          num_workers=4, pin_memory=True)
+                          num_workers=0, pin_memory=True)
 
     # Class weights for imbalance
     pos_rate = df_train["terminated"].mean()
