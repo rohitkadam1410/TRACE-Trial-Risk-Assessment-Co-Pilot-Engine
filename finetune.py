@@ -80,6 +80,8 @@ def train():
         MODEL_NAME,
         num_labels = 2,
         ignore_mismatched_sizes = True,
+        revision = "refs/pr/16",    # Fix for torch.load CVE: pull safetensors from HF PR
+        use_safetensors = True
     )
 
     # Apply LoRA — only trains ~800K params instead of 110M
