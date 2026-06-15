@@ -99,7 +99,7 @@ def train():
 
     # Class weights for imbalance
     pos_rate = df_train["terminated"].mean()
-    weight   = torch.tensor([pos_rate, 1 - pos_rate]).to(DEVICE)
+    weight   = torch.tensor([pos_rate, 1 - pos_rate], dtype=torch.float32).to(DEVICE)
     criterion = torch.nn.CrossEntropyLoss(weight=weight)
 
     # Optimizer + scheduler
