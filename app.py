@@ -141,6 +141,7 @@ _vllm_available: bool = False  # vLLM server connectivity
 _model_loaded: bool = False  # True when core ML artifacts are ready
 _copilot_client: Any = None  # openai.OpenAI or anthropic.Anthropic
 _copilot_backend: str = "none"  # "vllm" | "anthropic" | "none"
+_text_predictor: Any = None  # TextRiskPredictor (LoRA BERT)
 
 
 # ---------------------------------------------------------------------------
@@ -238,6 +239,7 @@ def startup() -> str:
     global _demo_trials, _benchmark_summary
     global _vllm_available, _model_loaded
     global _copilot_client, _copilot_backend
+    global _text_predictor
 
     report: list[str] = []
 
@@ -349,6 +351,16 @@ def startup() -> str:
         logger.warning("LLM client not available: %s", exc)
         _copilot_client = None
         _copilot_backend = "none"
+
+    # ── 9. LoRA Text Model ──
+    try:
+        from text_inference import TextRiskPredictor  # type: ignore
+        _text_predictor = TextRiskPredictor(lora_path="artifacts/lora_bert")
+        report.append("Text Risk Model: LOADED (LoRA BERT)")
+    except Exception as exc:
+        logger.warning("Text model not available: %s", exc)
+        _text_predictor = None
+        report.append("Text Risk Model: NOT LOADED ✗")
 
     # ── Print report ──
     divider = "=" * 52
@@ -978,9 +990,23 @@ def _run_live_scoring(
             scaler=_scaler,
             threshold=_threshold,
         )
-        prob = result["probability"]
-        risk_tier = result["risk_tier"]
-        risk_color = result["risk_color"]
+        prob_struct = result["probability"]
+        
+        # ── Text Model Inference ──
+        prob_text = prob_struct # Fallback
+        if _text_predictor is not None:
+            try:
+                prob_text = _text_predictor.predict_risk(protocol_text)
+                logger.info("Text Model Prob: %.4f | Struct Model Prob: %.4f", prob_text, prob_struct)
+            except Exception as e:
+                logger.error("Text inference failed: %s", e)
+                
+        # Ensemble Probability (Average)
+        prob = (prob_struct + prob_text) / 2.0
+
+        # Recalculate Risk Tier based on ensemble prob
+        risk_tier, risk_color = _score_to_risk_tier(prob, _threshold)
+        
         fv = result["feature_vector"]
 
         explanation = explain_prediction(
@@ -1014,6 +1040,7 @@ def _run_live_scoring(
             risk_color=risk_color, attributions=attributions,
             feature_vector=fv.tolist(),
             structured_features=struct,
+            prob_text=prob_text, # Cache text probability for what-if
         )
         return (
             render_risk_gauge(risk_tier, prob, risk_color),
@@ -1077,9 +1104,14 @@ def on_whatif_rescore(
 
         # ── Score ──
         feature_vector = _build_feature_vector(base_feats)
-        prob = float(
+        prob_struct = float(
             _model.predict_proba(feature_vector.reshape(1, -1))[:, 1][0]
         )
+        
+        # Use cached text probability
+        prob_text = state.get("prob_text", prob_struct)
+        prob = (prob_struct + prob_text) / 2.0
+        
         risk_tier, risk_color = _score_to_risk_tier(prob, _threshold)
 
         # ── SHAP ──
