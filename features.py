@@ -34,7 +34,7 @@ def get_feature_labels() -> dict[str, str]:
         "has_randomized": "Is randomized",
         "has_multicenter": "Is multi-center study",
         "text_complexity": "Text complexity score",
-        "enrollment_deficit": "Enrollment deficit vs phase avg",
+        "enrollment_ratio": "Enrollment ratio vs phase expected",
         "criteria_unique_ratio": "Criteria vocabulary uniqueness"
     }
 
@@ -59,11 +59,24 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
         df_feat['terminated'] = 0 
         
     # 1. log_enrollment: log1p(enrollment_count) - handles skew
-    df_feat['log_enrollment'] = np.log1p(df.get('enrollment_count', pd.Series([0]*len(df))).fillna(0).astype(float))
+    # Impute missing with median per phase
+    df_feat['phase_encoded'] = df.get('phase_encoded', pd.Series([2.0]*len(df))).fillna(2.0).astype(float)
+    enrollment_series = df.get('enrollment_count', pd.Series([0.0]*len(df))).fillna(0.0).astype(float)
     
-    # 2. phase_encoded: keep as-is
-    if 'phase_encoded' in df.columns:
-        df_feat['phase_encoded'] = df['phase_encoded'].fillna(0).astype(float)
+    # Calculate phase medians for non-zero enrollments
+    valid_mask = enrollment_series > 0
+    if valid_mask.any():
+        phase_medians = enrollment_series[valid_mask].groupby(df_feat['phase_encoded'][valid_mask]).median()
+    else:
+        phase_medians = {1.0: 30, 2.0: 150, 3.0: 500, 4.0: 1000}
+        
+    df_feat['enrollment_count'] = [
+        phase_medians.get(p, 150) if e == 0 else e 
+        for e, p in zip(enrollment_series, df_feat['phase_encoded'])
+    ]
+    df_feat['log_enrollment'] = np.log1p(df_feat['enrollment_count'])
+    
+    # 2. phase_encoded: keep as-is (already populated above)
         
     # 3. has_expanded_access: cast to int
     if 'has_expanded_access' in df.columns:
@@ -107,11 +120,11 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     # 13. text_complexity: (criteria_length + title_length) / (outcome_count + 1)
     df_feat['text_complexity'] = (df_feat['criteria_length'] + df_feat['title_length']) / (df_feat['outcome_count'] + 1)
     
-    # 14. enrollment_deficit: Phase expected vs actual
+    # 14. enrollment_ratio: Phase expected vs actual
     phase_enrollment_expected = {1.0: 30, 2.0: 150, 3.0: 500, 4.0: 1000}
-    df_feat['enrollment_deficit'] = df.apply(
-        lambda r: max(0, phase_enrollment_expected.get(float(r.get("phase_encoded", 0)) if pd.notna(r.get("phase_encoded")) else 150, 150) 
-                      - float(r.get("enrollment_count", 0) if pd.notna(r.get("enrollment_count")) else 0)), axis=1
+    df_feat['enrollment_ratio'] = df_feat.apply(
+        lambda r: r['enrollment_count'] / phase_enrollment_expected.get(r['phase_encoded'], 150),
+        axis=1
     ).astype(float)
     
     # 15. criteria_unique_ratio: unique words / total words in eligibility criteria
@@ -160,7 +173,7 @@ def process_features():
     print(f"Test size: {len(df_test)} ({len(df_test)/len(df_feat):.1%})")
     
     # Scale specific continuous features on train split only
-    cols_to_scale = ['log_enrollment', 'criteria_length', 'title_length', 'text_complexity', 'enrollment_deficit', 'criteria_unique_ratio']
+    cols_to_scale = ['log_enrollment', 'criteria_length', 'title_length', 'text_complexity', 'enrollment_ratio', 'criteria_unique_ratio']
     
     print("Fitting and applying standard scaler...")
     scaler = StandardScaler()

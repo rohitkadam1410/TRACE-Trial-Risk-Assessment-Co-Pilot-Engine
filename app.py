@@ -467,7 +467,7 @@ def _compute_structured_features(
         ),
         "has_multicenter": float(multicenter),
         "text_complexity": 0.0,  # computed below
-        "enrollment_deficit": 0.0,
+        "enrollment_ratio": 0.0,
         "criteria_unique_ratio": 0.0,
     }
     features["text_complexity"] = (
@@ -476,7 +476,7 @@ def _compute_structured_features(
     )
     phase_enrollment_expected = {1.0: 30, 2.0: 150, 3.0: 500, 4.0: 1000}
     phase_val = features["phase_encoded"]
-    features["enrollment_deficit"] = max(0.0, phase_enrollment_expected.get(phase_val, 150.0) - float(enrollment))
+    features["enrollment_ratio"] = float(enrollment) / phase_enrollment_expected.get(phase_val, 150.0)
     
     crit_words = criteria_text.split()
     features["criteria_unique_ratio"] = float(len(set(crit_words)) / (len(crit_words) + 1.0)) if crit_words else 0.0
@@ -1133,9 +1133,12 @@ def on_whatif_rescore(
             )
 
         base_feats["log_enrollment"] = float(np.log1p(enrollment))
-        base_feats["phase_encoded"] = PHASE_MAP.get(phase, 2.0)
+        phase_num = PHASE_MAP.get(phase, 2.0)
+        base_feats["phase_encoded"] = phase_num
         base_feats["has_multicenter"] = float(multicenter)
         base_feats["has_placebo"] = float(has_placebo)
+        phase_expected = {1.0: 30, 2.0: 150, 3.0: 500, 4.0: 1000}
+        base_feats["enrollment_ratio"] = float(enrollment) / phase_expected.get(phase_num, 150.0)
         # text_complexity unchanged — text-derived, not a what-if param
 
         # ── Score ──
