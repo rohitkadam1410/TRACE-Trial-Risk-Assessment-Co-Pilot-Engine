@@ -59,7 +59,7 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
         df_feat['terminated'] = 0 
         
     # 1. log_enrollment: log1p(enrollment_count) - handles skew
-    # Impute missing with median per phase
+    # Impute missing with median per phase (stored as a temporary series, NOT a feature)
     df_feat['phase_encoded'] = df.get('phase_encoded', pd.Series([2.0]*len(df))).fillna(2.0).astype(float)
     enrollment_series = df.get('enrollment_count', pd.Series([0.0]*len(df))).fillna(0.0).astype(float)
     
@@ -68,13 +68,15 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     if valid_mask.any():
         phase_medians = enrollment_series[valid_mask].groupby(df_feat['phase_encoded'][valid_mask]).median()
     else:
-        phase_medians = {1.0: 30, 2.0: 150, 3.0: 500, 4.0: 1000}
-        
-    df_feat['enrollment_count'] = [
+        phase_medians = pd.Series({1.0: 30, 2.0: 150, 3.0: 500, 4.0: 1000})
+    
+    # Temporary local series — NOT saved to df_feat
+    enrollment_imputed = pd.Series([
         phase_medians.get(p, 150) if e == 0 else e 
         for e, p in zip(enrollment_series, df_feat['phase_encoded'])
-    ]
-    df_feat['log_enrollment'] = np.log1p(df_feat['enrollment_count'])
+    ], dtype=float)
+    
+    df_feat['log_enrollment'] = np.log1p(enrollment_imputed)
     
     # 2. phase_encoded: keep as-is (already populated above)
         
@@ -120,11 +122,10 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     # 13. text_complexity: (criteria_length + title_length) / (outcome_count + 1)
     df_feat['text_complexity'] = (df_feat['criteria_length'] + df_feat['title_length']) / (df_feat['outcome_count'] + 1)
     
-    # 14. enrollment_ratio: Phase expected vs actual
+    # 14. enrollment_ratio: actual / phase expected (strong signal for underpowered trials)
     phase_enrollment_expected = {1.0: 30, 2.0: 150, 3.0: 500, 4.0: 1000}
-    df_feat['enrollment_ratio'] = df_feat.apply(
-        lambda r: r['enrollment_count'] / phase_enrollment_expected.get(r['phase_encoded'], 150),
-        axis=1
+    df_feat['enrollment_ratio'] = (
+        enrollment_imputed / df_feat['phase_encoded'].map(lambda p: phase_enrollment_expected.get(p, 150))
     ).astype(float)
     
     # 15. criteria_unique_ratio: unique words / total words in eligibility criteria
