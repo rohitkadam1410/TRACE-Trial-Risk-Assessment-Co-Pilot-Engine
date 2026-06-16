@@ -540,198 +540,128 @@ def _score_to_risk_tier(
 # ---------------------------------------------------------------------------
 # HTML rendering helpers
 CUSTOM_CSS: str = """
-/* ── TRACE – Premium Neumorphic Soft UI Theme ── */
+/* ── TRACE – Premium Soft UI & Native Sidebar Theme ── */
 
-/* 1. Global Background */
 body, .gradio-container {
-    background: #e0e5ec !important;
-    color: #4a5568 !important;
+    background: #f4f7fb !important;
+    color: #334155 !important;
     font-family: 'Inter', system-ui, sans-serif !important;
 }
 
-/* 2. Remove all borders from everything */
-* {
-    border: none !important;
-}
-
-/* 3. Neumorphic Sidebar Navigation */
-div.tabs {
-    display: flex !important;
-    flex-direction: row !important;
-    gap: 32px;
-    background: transparent !important;
-}
-div.tab-nav {
-    display: flex !important;
-    flex-direction: column !important;
-    min-width: 260px !important;
-    background: transparent !important;
+/* Sidebar Custom Styling */
+#sidebar_nav {
+    background: #ffffff !important;
+    border-radius: 16px !important;
     padding: 24px 16px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
+    height: 100%;
 }
-div.tab-nav > button {
+.sidebar-btn {
     text-align: left !important;
-    padding: 18px 24px !important;
-    border-radius: 16px !important;
-    margin-bottom: 20px !important;
-    background: #e0e5ec !important;
-    color: #718096 !important;
-    font-weight: 600 !important;
-    font-size: 16px !important;
-    transition: all 0.3s ease;
-    /* Soft protruding shadow */
-    box-shadow: 6px 6px 12px rgba(163,177,198,0.5), -6px -6px 12px rgba(255,255,255,0.8) !important;
-}
-div.tab-nav > button:hover {
-    color: #2b6cb0 !important;
-}
-div.tab-nav > button.selected {
-    color: #2b6cb0 !important;
-    /* Inset shadow to look pushed in */
-    box-shadow: inset 4px 4px 8px rgba(163,177,198,0.5), inset -4px -4px 8px rgba(255,255,255,0.8) !important;
-}
-div.tabitem {
-    flex-grow: 1 !important;
-    padding: 24px 0 !important;
+    padding: 16px 20px !important;
+    border-radius: 12px !important;
+    margin-bottom: 12px !important;
     background: transparent !important;
-}
-
-/* 4. Text Inputs & Upload areas (Inset Neumorphism) */
-textarea, input[type="text"], input[type="number"], .wrap, .upload-container {
-    background: #e0e5ec !important;
-    border-radius: 16px !important;
-    box-shadow: inset 4px 4px 8px rgba(163,177,198,0.5), inset -4px -4px 8px rgba(255,255,255,0.8) !important;
-    padding: 12px !important;
-    color: #4a5568 !important;
-}
-
-/* Dropdown override */
-.dropdown-menu, .select-wrap {
-    background: #e0e5ec !important;
-    border-radius: 16px !important;
-    box-shadow: inset 4px 4px 8px rgba(163,177,198,0.5), inset -4px -4px 8px rgba(255,255,255,0.8) !important;
-}
-
-/* 5. Primary Buttons (Vibrant Blue Neumorphism) */
-button.primary {
-    background: linear-gradient(135deg, #4299e1, #3182ce) !important;
-    color: #ffffff !important;
-    border-radius: 20px !important;
-    font-weight: 700 !important;
-    letter-spacing: 0.5px !important;
-    padding: 16px 24px !important;
-    box-shadow: 6px 6px 12px rgba(163,177,198,0.6), -6px -6px 12px rgba(255,255,255,0.8) !important;
+    border: none !important;
+    color: #64748b !important;
+    font-weight: 600 !important;
+    font-size: 15px !important;
+    box-shadow: none !important;
     transition: all 0.2s ease !important;
 }
-button.primary:active {
-    box-shadow: inset 4px 4px 8px rgba(49, 130, 206, 0.8), inset -4px -4px 8px rgba(100, 180, 255, 0.8) !important;
-    transform: scale(0.98);
+.sidebar-btn:hover {
+    background: #f8fafc !important;
+    color: #2563eb !important;
 }
-button.secondary {
-    background: #e0e5ec !important;
-    color: #4a5568 !important;
-    border-radius: 20px !important;
-    font-weight: 600 !important;
-    padding: 16px 24px !important;
-    box-shadow: 6px 6px 12px rgba(163,177,198,0.5), -6px -6px 12px rgba(255,255,255,0.8) !important;
-}
-button.secondary:active {
-    box-shadow: inset 4px 4px 8px rgba(163,177,198,0.5), inset -4px -4px 8px rgba(255,255,255,0.8) !important;
-    transform: scale(0.98);
+.sidebar-btn.active {
+    background: #eff6ff !important;
+    color: #2563eb !important;
+    border: 1px solid #bfdbfe !important;
 }
 
-/* 6. Checkboxes & Sliders */
-input[type="checkbox"] {
-    appearance: none !important;
-    width: 24px !important; height: 24px !important;
-    background: #e0e5ec !important;
-    border-radius: 6px !important;
-    box-shadow: inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.8) !important;
-    display: inline-flex !important; align-items: center !important; justify-content: center !important;
-}
-input[type="checkbox"]:checked {
-    background: #3182ce !important;
-    box-shadow: 3px 3px 6px rgba(163,177,198,0.5), -3px -3px 6px rgba(255,255,255,0.8) !important;
-}
-input[type="range"] {
-    background: transparent !important;
-}
-input[type="range"]::-webkit-slider-runnable-track {
-    background: #e0e5ec !important;
-    border-radius: 10px !important;
-    height: 12px !important;
-    box-shadow: inset 3px 3px 6px rgba(163,177,198,0.6), inset -3px -3px 6px rgba(255,255,255,0.8) !important;
-}
-input[type="range"]::-webkit-slider-thumb {
-    appearance: none !important;
-    width: 24px !important; height: 24px !important;
-    margin-top: -6px !important;
-    background: #3182ce !important;
-    border-radius: 50% !important;
-    box-shadow: 3px 3px 6px rgba(163,177,198,0.5), -3px -3px 6px rgba(255,255,255,0.8) !important;
+/* Main Content Area */
+#main_content {
+    padding: 0 16px !important;
 }
 
-/* 7. Premium Cards (Risk Gauge, Attributions) */
-.bench-card, .gpu-card, .live-card, .risk-gauge, .attr-table-container {
-    background: #e0e5ec !important;
-    border-radius: 30px !important; 
-    padding: 32px !important; 
-    margin-bottom: 24px !important;
-    box-shadow: 8px 8px 16px rgba(163,177,198,0.5), -8px -8px 16px rgba(255,255,255,0.8) !important;
+/* Premium Cards */
+.bench-card, .gpu-card, .live-card, .risk-gauge, .attr-table-container, .upload-container, .wrap {
+    background: #ffffff !important;
+    border-radius: 16px !important;
+    padding: 24px !important;
+    margin-bottom: 20px !important;
+    border: 1px solid rgba(0,0,0,0.02) !important;
+    box-shadow: 0 8px 24px rgba(0, 50, 100, 0.04) !important;
 }
 
-/* Header Adjustments */
-h1, h2, h3 {
-    color: #2d3748 !important;
-    text-shadow: 2px 2px 4px rgba(163,177,198,0.3), -2px -2px 4px rgba(255,255,255,0.8) !important;
+/* Headers */
+h1 {
+    color: #0f172a !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.5px;
     background: none !important;
-    -webkit-text-fill-color: #2d3748 !important;
+    -webkit-text-fill-color: #0f172a !important;
 }
 
-/* Risk Gauge Internals */
+/* Primary Buttons */
+button.primary {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+    color: #ffffff !important;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2) !important;
+    border: none !important;
+}
+button.primary:hover {
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3) !important;
+    transform: translateY(-1px);
+}
+
+/* Risk Gauge */
+.risk-gauge {
+    text-align: center;
+    padding: 32px 16px;
+}
 .risk-gauge .tier-label {
-    font-size: 16px; font-weight: 700; letter-spacing: 2px;
-    text-transform: uppercase; margin-bottom: 12px; color: #718096;
+    font-size: 15px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; margin-bottom: 8px; color: #64748b;
 }
 .risk-gauge .risk-pct {
-    font-size: 80px; font-weight: 800; line-height: 1; color: #2d3748;
-    text-shadow: 4px 4px 8px rgba(163,177,198,0.4), -4px -4px 8px rgba(255,255,255,0.9);
+    font-size: 72px; font-weight: 800; line-height: 1; color: #0f172a;
 }
 .risk-gauge .risk-bar-wrap {
-    width: 100%; height: 16px; background: #e0e5ec;
-    border-radius: 10px; overflow: hidden; margin-top: 24px;
-    box-shadow: inset 4px 4px 8px rgba(163,177,198,0.6), inset -4px -4px 8px rgba(255,255,255,0.8);
+    width: 100%; height: 10px; background: #f1f5f9;
+    border-radius: 6px; overflow: hidden; margin-top: 20px;
 }
 .risk-gauge .risk-bar-fill {
-    height: 100%; border-radius: 10px;
+    height: 100%; border-radius: 6px;
 }
 
 /* Badges and Tables */
 .delta-badge {
-    display: inline-block; padding: 8px 20px; border-radius: 20px;
-    font-weight: 700; font-size: 14px; margin-top: 24px;
-    background: #e0e5ec; color: #4a5568;
-    box-shadow: 4px 4px 8px rgba(163,177,198,0.5), -4px -4px 8px rgba(255,255,255,0.8);
+    display: inline-block; padding: 6px 16px; border-radius: 20px;
+    font-weight: 600; font-size: 13px; margin-top: 18px;
+    background: #f8fafc; color: #475569; border: 1px solid #e2e8f0;
 }
-.attr-table { width:100%; border-collapse:separate; border-spacing:0 12px; font-size:14px; }
+.attr-table { width:100%; border-collapse:separate; border-spacing:0 4px; font-size:14px; }
 .attr-table th {
-    text-align:left; padding:10px 14px; font-weight:700;
-    color:#718096; font-size:12px; text-transform:uppercase; letter-spacing:1px;
+    text-align:left; padding:10px 14px; font-weight:600;
+    color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;
+    border-bottom: 1px solid #e2e8f0;
 }
 .attr-table td { 
-    padding:16px 20px; background: #e0e5ec; 
-    box-shadow: 4px 4px 8px rgba(163,177,198,0.4), -4px -4px 8px rgba(255,255,255,0.8);
+    padding:14px 16px; background: #ffffff; 
+    border: 1px solid #f1f5f9;
 }
-.attr-table tr td:first-child { border-top-left-radius: 16px; border-bottom-left-radius: 16px; }
-.attr-table tr td:last-child { border-top-right-radius: 16px; border-bottom-right-radius: 16px; }
-.attr-table tr.inc td:first-child { border-left: 6px solid #f56565 !important; }
-.attr-table tr.dec td:first-child { border-left: 6px solid #48bb78 !important; }
+.attr-table tr.inc td:first-child { border-left: 4px solid #ef4444 !important; }
+.attr-table tr.dec td:first-child { border-left: 4px solid #10b981 !important; }
 
-.stat-lbl { color: #718096; font-size: 13px; text-transform: uppercase; font-weight: 700; }
-.stat-val { font-size: 28px; font-weight: 800; color: #3182ce; }
-.gpu-title { font-size:18px; font-weight:800; color:#2d3748; margin-bottom:20px; display:flex; align-items:center; gap:12px; }
-.gpu-row { display:flex; justify-content:space-between; padding:12px 0; }
-.gpu-k { color:#718096; font-size:15px; font-weight:600;}
-.gpu-v { color:#2d3748; font-weight:700; font-size:15px; }
+.stat-lbl { color: #64748b; font-size: 13px; text-transform: uppercase; font-weight: 600; }
+.stat-val { font-size: 26px; font-weight: 800; color: #2563eb; }
+.gpu-title { font-size:16px; font-weight:700; color:#334155; margin-bottom:16px; display:flex; align-items:center; gap:8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;}
+.gpu-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f8fafc; }
+.gpu-k { color:#64748b; font-size:14px; }
+.gpu-v { color:#0f172a; font-weight:600; font-size:14px; }
 """
 
 
@@ -1651,30 +1581,29 @@ def build_demo() -> gr.Blocks:
     dropdown_choices = _build_dropdown_choices()
 
     # ── Theme ──
-    # Neumorphism dictates everything shares the same base color.
     theme = gr.themes.Base(
         primary_hue=gr.themes.colors.blue,
         secondary_hue=gr.themes.colors.slate,
         neutral_hue=gr.themes.colors.slate,
         font=[gr.themes.GoogleFont("Inter"), "system-ui", "sans-serif"],
     ).set(
-        body_background_fill="#e0e5ec",
-        body_background_fill_dark="#e0e5ec",
-        block_background_fill="#e0e5ec",
-        block_background_fill_dark="#e0e5ec",
-        block_border_width="0px",
-        block_border_color="transparent",
-        block_label_text_color="#718096",
-        block_title_text_color="#2d3748",
-        input_background_fill="#e0e5ec",
-        input_background_fill_dark="#e0e5ec",
-        input_border_color="transparent",
-        button_primary_background_fill="linear-gradient(135deg, #4299e1, #3182ce)",
-        button_primary_background_fill_hover="linear-gradient(135deg, #3182ce, #2b6cb0)",
+        body_background_fill="#f4f7fb",
+        body_background_fill_dark="#f4f7fb",
+        block_background_fill="#ffffff",
+        block_background_fill_dark="#ffffff",
+        block_border_width="1px",
+        block_border_color="rgba(0,0,0,0.02)",
+        block_label_text_color="#64748b",
+        block_title_text_color="#0f172a",
+        input_background_fill="#ffffff",
+        input_background_fill_dark="#ffffff",
+        input_border_color="#cbd5e1",
+        button_primary_background_fill="#2563eb",
+        button_primary_background_fill_hover="#1d4ed8",
         button_primary_text_color="#ffffff",
-        button_secondary_background_fill="#e0e5ec",
-        button_secondary_background_fill_hover="#e0e5ec",
-        button_secondary_text_color="#4a5568",
+        button_secondary_background_fill="#f1f5f9",
+        button_secondary_background_fill_hover="#e2e8f0",
+        button_secondary_text_color="#334155",
     )
 
     with gr.Blocks(
@@ -1698,316 +1627,348 @@ def build_demo() -> gr.Blocks:
             "Clinical Trial Risk Prediction · Powered by AMD MI300X</p></div>"
         )
 
-        with gr.Tabs() as tabs:
 
-            # ══════════════════════════════════════════════════════
-            # TAB 1 — Protocol Risk Scorer
-            # ══════════════════════════════════════════════════════
-            with gr.Tab("🎯 Protocol Risk Scorer", id="tab_scorer"):
+        with gr.Row(elem_id="main_container"):
+            # ── Sidebar Navigation ──
+            with gr.Column(scale=1, elem_id="sidebar_nav"):
+                btn_scorer = gr.Button("🎯 Protocol Risk Scorer", elem_classes=["sidebar-btn", "active"])
+                btn_copilot = gr.Button("🤖 Protocol Co-Pilot", elem_classes=["sidebar-btn"])
+                btn_amd = gr.Button("🚀 AMD Performance", elem_classes=["sidebar-btn"])
 
-                with gr.Row():
-                    # ── Left column (60 %) ──
-                    with gr.Column(scale=3):
-                        demo_dropdown = gr.Dropdown(
-                            choices=dropdown_choices,
-                            label="📋 Load demo trial",
-                            value=(
-                                dropdown_choices[0]
-                                if dropdown_choices else None
-                            ),
-                            interactive=True,
-                            elem_id="demo_trial_dropdown",
-                        )
-                        protocol_file = gr.File(
-                            label="📄 Upload Protocol (JSON/CSV/TXT/PDF/DOCX)",
-                            file_types=[".json", ".csv", ".txt", ".pdf", ".docx"],
-                            elem_id="protocol_file_upload",
-                        )
-                        study_title = gr.Textbox(
-                            label="Study Name / Title",
-                            placeholder="Enter the official trial title...",
-                            lines=1,
-                            elem_id="study_title",
-                        )
-                        protocol_text = gr.Textbox(
-                            label="Protocol text",
-                            placeholder=(
-                                "Select a demo trial, upload a file, or paste protocol "
-                                "text here …"
-                            ),
-                            lines=6,
-                            max_lines=15,
-                            elem_id="protocol_text",
-                        )
+            # ── Main Content Area ──
+            with gr.Column(scale=4, elem_id="main_content"):
 
-                        with gr.Row():
-                            enrollment_slider = gr.Slider(
-                                minimum=10, maximum=2000, step=10,
-                                value=100,
-                                label="👥 Enrolled patients",
-                                elem_id="enrollment_slider",
+
+                # ══════════════════════════════════════════════════════
+                # TAB 1 — Protocol Risk Scorer
+                # ══════════════════════════════════════════════════════
+                with gr.Group(visible=True, elem_id="panel_scorer") as panel_scorer:
+
+                    with gr.Row():
+                        # ── Left column (60 %) ──
+                        with gr.Column(scale=3):
+                            demo_dropdown = gr.Dropdown(
+                                choices=dropdown_choices,
+                                label="📋 Load demo trial",
+                                value=(
+                                    dropdown_choices[0]
+                                    if dropdown_choices else None
+                                ),
+                                interactive=True,
+                                elem_id="demo_trial_dropdown",
                             )
-                            phase_dropdown = gr.Dropdown(
-                                choices=[
-                                    "Phase 1", "Phase 2",
-                                    "Phase 3", "Phase 4",
-                                ],
-                                value="Phase 2",
-                                label="🔬 Trial phase",
-                                elem_id="phase_dropdown",
+                            protocol_file = gr.File(
+                                label="📄 Upload Protocol (JSON/CSV/TXT/PDF/DOCX)",
+                                file_types=[".json", ".csv", ".txt", ".pdf", ".docx"],
+                                elem_id="protocol_file_upload",
+                            )
+                            study_title = gr.Textbox(
+                                label="Study Name / Title",
+                                placeholder="Enter the official trial title...",
+                                lines=1,
+                                elem_id="study_title",
+                            )
+                            protocol_text = gr.Textbox(
+                                label="Protocol text",
+                                placeholder=(
+                                    "Select a demo trial, upload a file, or paste protocol "
+                                    "text here …"
+                                ),
+                                lines=6,
+                                max_lines=15,
+                                elem_id="protocol_text",
                             )
 
-                        with gr.Row():
-                            multicenter_chk = gr.Checkbox(
-                                label="🏢 Multicenter", value=False,
-                                elem_id="multicenter_check",
-                            )
-                            placebo_chk = gr.Checkbox(
-                                label="💊 Has placebo control",
+                            with gr.Row():
+                                enrollment_slider = gr.Slider(
+                                    minimum=10, maximum=2000, step=10,
+                                    value=100,
+                                    label="👥 Enrolled patients",
+                                    elem_id="enrollment_slider",
+                                )
+                                phase_dropdown = gr.Dropdown(
+                                    choices=[
+                                        "Phase 1", "Phase 2",
+                                        "Phase 3", "Phase 4",
+                                    ],
+                                    value="Phase 2",
+                                    label="🔬 Trial phase",
+                                    elem_id="phase_dropdown",
+                                )
+
+                            with gr.Row():
+                                multicenter_chk = gr.Checkbox(
+                                    label="🏢 Multicenter", value=False,
+                                    elem_id="multicenter_check",
+                                )
+                                placebo_chk = gr.Checkbox(
+                                    label="💊 Has placebo control",
+                                    value=False,
+                                    elem_id="placebo_check",
+                                )
+
+                            live_toggle = gr.Checkbox(
+                                label="🔴 Live inference mode (uses AMD GPU)",
                                 value=False,
-                                elem_id="placebo_check",
+                                elem_id="live_toggle",
                             )
 
-                        live_toggle = gr.Checkbox(
-                            label="🔴 Live inference mode (uses AMD GPU)",
-                            value=False,
-                            elem_id="live_toggle",
-                        )
+                            with gr.Row():
+                                score_btn = gr.Button(
+                                    "⚡ Score Risk",
+                                    variant="primary", size="lg",
+                                    elem_id="score_btn",
+                                )
+                                whatif_btn = gr.Button(
+                                    "🔄 What-if: Rescore with changes",
+                                    variant="secondary", size="lg",
+                                    elem_id="whatif_btn",
+                                )
 
-                        with gr.Row():
-                            score_btn = gr.Button(
-                                "⚡ Score Risk",
-                                variant="primary", size="lg",
-                                elem_id="score_btn",
+                        # ── Right column (40 %) ──
+                        with gr.Column(scale=2):
+                            risk_gauge = gr.HTML(
+                                value=render_risk_gauge("—", 0.0, "#555555"),
+                                elem_id="risk_gauge",
                             )
-                            whatif_btn = gr.Button(
-                                "🔄 What-if: Rescore with changes",
-                                variant="secondary", size="lg",
-                                elem_id="whatif_btn",
+                            attribution_html = gr.HTML(
+                                value=(
+                                    "<p style='color:#888;text-align:center;"
+                                    "padding:12px;'>Select a trial to see "
+                                    "attributions</p>"
+                                ),
+                                elem_id="attribution_table",
+                            )
+                            explanation_box = gr.Textbox(
+                                label="📝 Risk Explanation",
+                                interactive=False, lines=3,
+                                elem_id="explanation_text",
+                            )
+                            waterfall_img = gr.Image(
+                                label="SHAP Waterfall",
+                                type="filepath",
+                                interactive=False,
+                                elem_id="waterfall_img",
                             )
 
-                    # ── Right column (40 %) ──
-                    with gr.Column(scale=2):
-                        risk_gauge = gr.HTML(
-                            value=render_risk_gauge("—", 0.0, "#555555"),
-                            elem_id="risk_gauge",
-                        )
-                        attribution_html = gr.HTML(
-                            value=(
-                                "<p style='color:#888;text-align:center;"
-                                "padding:12px;'>Select a trial to see "
-                                "attributions</p>"
-                            ),
-                            elem_id="attribution_table",
-                        )
-                        explanation_box = gr.Textbox(
-                            label="📝 Risk Explanation",
-                            interactive=False, lines=3,
-                            elem_id="explanation_text",
-                        )
-                        waterfall_img = gr.Image(
-                            label="SHAP Waterfall",
-                            type="filepath",
-                            interactive=False,
-                            elem_id="waterfall_img",
-                        )
-
-                # ── Wire Tab 1 callbacks ──
-                _right_outputs = [
-                    risk_gauge, attribution_html,
-                    explanation_box, waterfall_img, app_state,
-                ]
-
-                demo_dropdown.change(
-                    fn=on_demo_trial_selected,
-                    inputs=[demo_dropdown],
-                    outputs=[
-                        protocol_text, study_title, enrollment_slider, phase_dropdown,
-                        multicenter_chk, placebo_chk,
-                        *_right_outputs,
-                    ],
-                )
-
-                protocol_file.upload(
-                    fn=handle_file_upload,
-                    inputs=[protocol_file],
-                    outputs=[
-                        protocol_text, study_title, enrollment_slider, 
-                        phase_dropdown, multicenter_chk, placebo_chk
+                    # ── Wire Tab 1 callbacks ──
+                    _right_outputs = [
+                        risk_gauge, attribution_html,
+                        explanation_box, waterfall_img, app_state,
                     ]
-                )
 
-                score_btn.click(
-                    fn=on_score_risk,
-                    inputs=[
-                        protocol_text, study_title, enrollment_slider, phase_dropdown,
-                        multicenter_chk, placebo_chk,
-                        live_toggle, app_state,
-                    ],
-                    outputs=_right_outputs,
-                )
+                    demo_dropdown.change(
+                        fn=on_demo_trial_selected,
+                        inputs=[demo_dropdown],
+                        outputs=[
+                            protocol_text, study_title, enrollment_slider, phase_dropdown,
+                            multicenter_chk, placebo_chk,
+                            *_right_outputs,
+                        ],
+                    )
 
-                whatif_btn.click(
-                    fn=on_whatif_rescore,
-                    inputs=[
-                        protocol_text, study_title, enrollment_slider, phase_dropdown,
-                        multicenter_chk, placebo_chk, app_state,
-                    ],
-                    outputs=_right_outputs,
-                )
+                    protocol_file.upload(
+                        fn=handle_file_upload,
+                        inputs=[protocol_file],
+                        outputs=[
+                            protocol_text, study_title, enrollment_slider, 
+                            phase_dropdown, multicenter_chk, placebo_chk
+                        ]
+                    )
 
-            # ══════════════════════════════════════════════════════
-            # TAB 2 — Protocol Co-Pilot
-            # ══════════════════════════════════════════════════════
-            with gr.Tab(
-                "🤖 Protocol Co-Pilot", id="tab_copilot"
-            ) as copilot_tab:
-
-                gr.HTML(
-                    '<div style="text-align:center;padding:6px 0 12px;">'
-                    '<h2 style="font-size:20px;font-weight:700;color:#E0E0F0;'
-                    'margin:0;">Protocol Co-Pilot</h2>'
-                    '<p style="color:#8888AA;font-size:13px;margin:4px 0 0;">'
-                    "AI-powered improvement suggestions based on risk "
-                    "attributions</p></div>"
-                )
-
-                with gr.Row():
-                    with gr.Column():
-                        section_dd = gr.Dropdown(
-                            choices=["(Score a trial first)"],
-                            label="📌 Select section to improve",
-                            elem_id="section_dropdown",
-                        )
-                        section_text = gr.Textbox(
-                            label="Current section text",
-                            lines=6, interactive=True,
-                            elem_id="section_text",
-                        )
-                        suggest_btn = gr.Button(
-                            "💡 Suggest improvements",
-                            variant="primary", size="lg",
-                            elem_id="suggest_btn",
-                        )
-
-                    with gr.Column():
-                        suggestions_box = gr.Textbox(
-                            label="🔧 Rewrite Suggestions",
-                            lines=10, interactive=False,
-                            elem_id="suggestions_text",
-                        )
-                        with gr.Row():
-                            apply1 = gr.Button(
-                                "Apply suggestion 1", size="sm",
-                                elem_id="apply_1",
-                            )
-                            apply2 = gr.Button(
-                                "Apply suggestion 2", size="sm",
-                                elem_id="apply_2",
-                            )
-                            apply3 = gr.Button(
-                                "Apply suggestion 3", size="sm",
-                                elem_id="apply_3",
-                            )
-
-                # ── Wire Tab 2 callbacks ──
-                copilot_tab.select(
-                    fn=on_copilot_tab_selected,
-                    inputs=[app_state],
-                    outputs=[section_dd],
-                )
-
-                section_dd.change(
-                    fn=on_section_selected,
-                    inputs=[section_dd, app_state],
-                    outputs=[section_text],
-                )
-
-                suggest_btn.click(
-                    fn=on_suggest_improvements,
-                    inputs=[section_dd, section_text, app_state],
-                    outputs=[suggestions_box],
-                )
-
-                # Apply buttons: update protocol text → rescore
-                for btn, i in [(apply1, 0), (apply2, 1), (apply3, 2)]:
-                    btn.click(
-                        fn=lambda s, p, idx=i: on_apply_suggestion(
-                            s, p, idx
-                        ),
-                        inputs=[suggestions_box, protocol_text],
-                        outputs=[protocol_text],
-                    ).then(
-                        fn=on_whatif_rescore,
+                    score_btn.click(
+                        fn=on_score_risk,
                         inputs=[
-                            protocol_text, study_title, enrollment_slider,
-                            phase_dropdown, multicenter_chk,
-                            placebo_chk, app_state,
+                            protocol_text, study_title, enrollment_slider, phase_dropdown,
+                            multicenter_chk, placebo_chk,
+                            live_toggle, app_state,
                         ],
                         outputs=_right_outputs,
                     )
 
-            # ══════════════════════════════════════════════════════
-            # TAB 3 — AMD Performance
-            # ══════════════════════════════════════════════════════
-            with gr.Tab("🚀 AMD Performance", id="tab_amd"):
+                    whatif_btn.click(
+                        fn=on_whatif_rescore,
+                        inputs=[
+                            protocol_text, study_title, enrollment_slider, phase_dropdown,
+                            multicenter_chk, placebo_chk, app_state,
+                        ],
+                        outputs=_right_outputs,
+                    )
 
-                gr.HTML(
-                    '<div style="text-align:center;padding:6px 0 12px;">'
-                    '<h2 style="font-size:20px;font-weight:700;color:#E0E0F0;'
-                    'margin:0;">AMD MI300X Performance</h2>'
-                    '<p style="color:#8888AA;font-size:13px;margin:4px 0 0;">'
-                    "Real hardware benchmarks for GPU-accelerated clinical "
-                    "trial analysis</p></div>"
-                )
+                # ══════════════════════════════════════════════════════
+                # TAB 2 — Protocol Co-Pilot
+                # ══════════════════════════════════════════════════════
+                with gr.Group(visible=False, elem_id="panel_copilot") as panel_copilot:
 
-                with gr.Row():
-                    with gr.Column():
-                        gr.HTML(
-                            value=render_benchmark_panel(
-                                _benchmark_summary
+                    gr.HTML(
+                        '<div style="text-align:center;padding:6px 0 12px;">'
+                        '<h2 style="font-size:20px;font-weight:700;color:#E0E0F0;'
+                        'margin:0;">Protocol Co-Pilot</h2>'
+                        '<p style="color:#8888AA;font-size:13px;margin:4px 0 0;">'
+                        "AI-powered improvement suggestions based on risk "
+                        "attributions</p></div>"
+                    )
+
+                    with gr.Row():
+                        with gr.Column():
+                            section_dd = gr.Dropdown(
+                                choices=["(Score a trial first)"],
+                                label="📌 Select section to improve",
+                                elem_id="section_dropdown",
+                            )
+                            section_text = gr.Textbox(
+                                label="Current section text",
+                                lines=6, interactive=True,
+                                elem_id="section_text",
+                            )
+                            suggest_btn = gr.Button(
+                                "💡 Suggest improvements",
+                                variant="primary", size="lg",
+                                elem_id="suggest_btn",
+                            )
+
+                        with gr.Column():
+                            suggestions_box = gr.Textbox(
+                                label="🔧 Rewrite Suggestions",
+                                lines=10, interactive=False,
+                                elem_id="suggestions_text",
+                            )
+                            with gr.Row():
+                                apply1 = gr.Button(
+                                    "Apply suggestion 1", size="sm",
+                                    elem_id="apply_1",
+                                )
+                                apply2 = gr.Button(
+                                    "Apply suggestion 2", size="sm",
+                                    elem_id="apply_2",
+                                )
+                                apply3 = gr.Button(
+                                    "Apply suggestion 3", size="sm",
+                                    elem_id="apply_3",
+                                )
+
+                    # ── Wire Tab 2 callbacks ──
+
+
+                    section_dd.change(
+                        fn=on_section_selected,
+                        inputs=[section_dd, app_state],
+                        outputs=[section_text],
+                    )
+
+                    suggest_btn.click(
+                        fn=on_suggest_improvements,
+                        inputs=[section_dd, section_text, app_state],
+                        outputs=[suggestions_box],
+                    )
+
+                    # Apply buttons: update protocol text → rescore
+                    for btn, i in [(apply1, 0), (apply2, 1), (apply3, 2)]:
+                        btn.click(
+                            fn=lambda s, p, idx=i: on_apply_suggestion(
+                                s, p, idx
                             ),
-                            elem_id="benchmark_panel",
-                        )
-                        gr.HTML(
-                            value=render_gpu_specs(),
-                            elem_id="gpu_specs",
-                        )
-
-                    with gr.Column():
-                        gr.Image(
-                            label="Benchmark Results",
-                            value=(
-                                BENCHMARK_CHART_PATH
-                                if os.path.exists(BENCHMARK_CHART_PATH)
-                                else None
-                            ),
-                            type="filepath",
-                            interactive=False,
-                            elem_id="benchmark_chart",
+                            inputs=[suggestions_box, protocol_text],
+                            outputs=[protocol_text],
+                        ).then(
+                            fn=on_whatif_rescore,
+                            inputs=[
+                                protocol_text, study_title, enrollment_slider,
+                                phase_dropdown, multicenter_chk,
+                                placebo_chk, app_state,
+                            ],
+                            outputs=_right_outputs,
                         )
 
-                gr.HTML("<div style='height:12px;'></div>")
+                # ══════════════════════════════════════════════════════
+                # TAB 3 — AMD Performance
+                # ══════════════════════════════════════════════════════
+                with gr.Group(visible=False, elem_id="panel_amd") as panel_amd:
 
-                live_btn = gr.Button(
-                    "⚡ Run live inference now (uses AMD GPU)",
-                    variant="primary", size="lg",
-                    elem_id="live_inference_btn",
-                )
-                live_result = gr.HTML(
-                    value=(
-                        "<p style='color:#888;text-align:center;padding:20px;'>"
-                        "Click above to run real-time inference on AMD MI300X"
-                        "</p>"
-                    ),
-                    elem_id="live_result",
-                )
+                    gr.HTML(
+                        '<div style="text-align:center;padding:6px 0 12px;">'
+                        '<h2 style="font-size:20px;font-weight:700;color:#E0E0F0;'
+                        'margin:0;">AMD MI300X Performance</h2>'
+                        '<p style="color:#8888AA;font-size:13px;margin:4px 0 0;">'
+                        "Real hardware benchmarks for GPU-accelerated clinical "
+                        "trial analysis</p></div>"
+                    )
 
-                live_btn.click(
-                    fn=on_run_live_inference,
-                    inputs=[],
-                    outputs=[live_result],
+                    with gr.Row():
+                        with gr.Column():
+                            gr.HTML(
+                                value=render_benchmark_panel(
+                                    _benchmark_summary
+                                ),
+                                elem_id="benchmark_panel",
+                            )
+                            gr.HTML(
+                                value=render_gpu_specs(),
+                                elem_id="gpu_specs",
+                            )
+
+                        with gr.Column():
+                            gr.Image(
+                                label="Benchmark Results",
+                                value=(
+                                    BENCHMARK_CHART_PATH
+                                    if os.path.exists(BENCHMARK_CHART_PATH)
+                                    else None
+                                ),
+                                type="filepath",
+                                interactive=False,
+                                elem_id="benchmark_chart",
+                            )
+
+                    gr.HTML("<div style='height:12px;'></div>")
+
+                    live_btn = gr.Button(
+                        "⚡ Run live inference now (uses AMD GPU)",
+                        variant="primary", size="lg",
+                        elem_id="live_inference_btn",
+                    )
+                    live_result = gr.HTML(
+                        value=(
+                            "<p style='color:#888;text-align:center;padding:20px;'>"
+                            "Click above to run real-time inference on AMD MI300X"
+                            "</p>"
+                        ),
+                        elem_id="live_result",
+                    )
+
+                    live_btn.click(
+                        fn=on_run_live_inference,
+                        inputs=[],
+                        outputs=[live_result],
+                    )
+
+
+                # ── Wire Sidebar Navigation ──
+                def switch_to_scorer():
+                    return (gr.update(visible=True), gr.update(visible=False), gr.update(visible=False), 
+                            gr.update(elem_classes=["sidebar-btn", "active"]), 
+                            gr.update(elem_classes=["sidebar-btn"]), 
+                            gr.update(elem_classes=["sidebar-btn"]))
+                
+                def switch_to_copilot():
+                    return (gr.update(visible=False), gr.update(visible=True), gr.update(visible=False),
+                            gr.update(elem_classes=["sidebar-btn"]), 
+                            gr.update(elem_classes=["sidebar-btn", "active"]), 
+                            gr.update(elem_classes=["sidebar-btn"]))
+
+                def switch_to_amd():
+                    return (gr.update(visible=False), gr.update(visible=False), gr.update(visible=True),
+                            gr.update(elem_classes=["sidebar-btn"]), 
+                            gr.update(elem_classes=["sidebar-btn"]), 
+                            gr.update(elem_classes=["sidebar-btn", "active"]))
+
+                sidebar_outputs = [panel_scorer, panel_copilot, panel_amd, btn_scorer, btn_copilot, btn_amd]
+
+                btn_scorer.click(fn=switch_to_scorer, inputs=[], outputs=sidebar_outputs)
+                btn_copilot.click(fn=switch_to_copilot, inputs=[], outputs=sidebar_outputs).then(
+                    fn=on_copilot_tab_selected, inputs=[app_state], outputs=[section_dd]
                 )
+                btn_amd.click(fn=switch_to_amd, inputs=[], outputs=sidebar_outputs)
 
         # ── Footer ──
         gr.HTML(
