@@ -1863,49 +1863,7 @@ def build_demo() -> gr.Blocks:
                                 elem_id="waterfall_img",
                             )
 
-                    # ── Wire Tab 1 callbacks ──
-                    _right_outputs = [
-                        risk_gauge, attribution_html,
-                        explanation_box, waterfall_img, app_state,
-                    ]
 
-                    demo_dropdown.change(
-                        fn=on_demo_trial_selected,
-                        inputs=[demo_dropdown],
-                        outputs=[
-                            protocol_text, study_title, enrollment_slider, phase_dropdown,
-                            multicenter_chk, placebo_chk, section_text,
-                            *_right_outputs,
-                        ],
-                    )
-
-                    protocol_file.upload(
-                        fn=handle_file_upload,
-                        inputs=[protocol_file],
-                        outputs=[
-                            protocol_text, study_title, enrollment_slider, 
-                            phase_dropdown, multicenter_chk, placebo_chk, section_text
-                        ]
-                    )
-
-                    score_btn.click(
-                        fn=on_score_risk,
-                        inputs=[
-                            protocol_text, study_title, enrollment_slider, phase_dropdown,
-                            multicenter_chk, placebo_chk,
-                            live_toggle, app_state,
-                        ],
-                        outputs=_right_outputs,
-                    )
-
-                    whatif_btn.click(
-                        fn=on_whatif_rescore,
-                        inputs=[
-                            protocol_text, study_title, enrollment_slider, phase_dropdown,
-                            multicenter_chk, placebo_chk, app_state,
-                        ],
-                        outputs=_right_outputs,
-                    )
 
                 # ══════════════════════════════════════════════════════
                 # TAB 2 — Protocol Co-Pilot
@@ -2054,6 +2012,50 @@ def build_demo() -> gr.Blocks:
                         outputs=[live_result],
                     )
 
+
+                # ── Wire Tab 1 callbacks ──
+                _right_outputs = [
+                    risk_gauge, attribution_html,
+                    explanation_box, waterfall_img, app_state,
+                ]
+
+                demo_dropdown.change(
+                    fn=on_demo_trial_selected,
+                    inputs=[demo_dropdown],
+                    outputs=[
+                        protocol_text, study_title, enrollment_slider, phase_dropdown,
+                        multicenter_chk, placebo_chk, section_text,
+                        *_right_outputs,
+                    ],
+                )
+
+                protocol_file.upload(
+                    fn=handle_file_upload,
+                    inputs=[protocol_file],
+                    outputs=[
+                        protocol_text, study_title, enrollment_slider, 
+                        phase_dropdown, multicenter_chk, placebo_chk, section_text
+                    ]
+                )
+
+                score_btn.click(
+                    fn=on_score_risk,
+                    inputs=[
+                        protocol_text, study_title, enrollment_slider, phase_dropdown,
+                        multicenter_chk, placebo_chk,
+                        live_toggle, app_state,
+                    ],
+                    outputs=_right_outputs,
+                )
+
+                whatif_btn.click(
+                    fn=on_whatif_rescore,
+                    inputs=[
+                        protocol_text, study_title, enrollment_slider, phase_dropdown,
+                        multicenter_chk, placebo_chk, app_state,
+                    ],
+                    outputs=_right_outputs,
+                )
 
                 # ── Wire Sidebar Navigation ──
                 def switch_to_scorer():
