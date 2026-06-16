@@ -540,14 +540,21 @@ def _score_to_risk_tier(
 # ---------------------------------------------------------------------------
 # HTML rendering helpers
 CUSTOM_CSS: str = """
-/* ── TRACE – Premium Enterprise Light Theme & Sidebar ── */
+/* ── TRACE – Premium Neumorphic Soft UI Theme ── */
+
+/* 1. Global Background */
 body, .gradio-container {
-    background: #f8fafc !important;
-    color: #1e293b;
+    background: #e0e5ec !important;
+    color: #4a5568 !important;
     font-family: 'Inter', system-ui, sans-serif !important;
 }
 
-/* Sidebar Navigation Overrides */
+/* 2. Remove all borders from everything */
+* {
+    border: none !important;
+}
+
+/* 3. Neumorphic Sidebar Navigation */
 div.tabs {
     display: flex !important;
     flex-direction: row !important;
@@ -558,115 +565,173 @@ div.tab-nav {
     display: flex !important;
     flex-direction: column !important;
     min-width: 260px !important;
-    border-right: 1px solid #e2e8f0 !important;
-    border-bottom: none !important;
-    margin-bottom: 0 !important;
-    padding-right: 24px;
     background: transparent !important;
+    padding: 24px 16px !important;
 }
 div.tab-nav > button {
     text-align: left !important;
-    padding: 14px 20px !important;
-    border: 1px solid transparent !important;
-    border-radius: 8px !important;
-    margin-bottom: 8px !important;
-    background: transparent !important;
-    color: #475569 !important;
-    font-weight: 500 !important;
-    font-size: 15px !important;
-    transition: all 0.2s ease;
+    padding: 18px 24px !important;
+    border-radius: 16px !important;
+    margin-bottom: 20px !important;
+    background: #e0e5ec !important;
+    color: #718096 !important;
+    font-weight: 600 !important;
+    font-size: 16px !important;
+    transition: all 0.3s ease;
+    /* Soft protruding shadow */
+    box-shadow: 6px 6px 12px rgba(163,177,198,0.5), -6px -6px 12px rgba(255,255,255,0.8) !important;
 }
 div.tab-nav > button:hover {
-    background: #f1f5f9 !important;
+    color: #2b6cb0 !important;
 }
 div.tab-nav > button.selected {
-    background: #eff6ff !important;
-    color: #2563eb !important;
-    font-weight: 600 !important;
-    border: 1px solid #bfdbfe !important;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    color: #2b6cb0 !important;
+    /* Inset shadow to look pushed in */
+    box-shadow: inset 4px 4px 8px rgba(163,177,198,0.5), inset -4px -4px 8px rgba(255,255,255,0.8) !important;
 }
 div.tabitem {
     flex-grow: 1 !important;
-    border: none !important;
-    padding: 0 !important;
+    padding: 24px 0 !important;
     background: transparent !important;
 }
 
+/* 4. Text Inputs & Upload areas (Inset Neumorphism) */
+textarea, input[type="text"], input[type="number"], .wrap, .upload-container {
+    background: #e0e5ec !important;
+    border-radius: 16px !important;
+    box-shadow: inset 4px 4px 8px rgba(163,177,198,0.5), inset -4px -4px 8px rgba(255,255,255,0.8) !important;
+    padding: 12px !important;
+    color: #4a5568 !important;
+}
+
+/* Dropdown override */
+.dropdown-menu, .select-wrap {
+    background: #e0e5ec !important;
+    border-radius: 16px !important;
+    box-shadow: inset 4px 4px 8px rgba(163,177,198,0.5), inset -4px -4px 8px rgba(255,255,255,0.8) !important;
+}
+
+/* 5. Primary Buttons (Vibrant Blue Neumorphism) */
+button.primary {
+    background: linear-gradient(135deg, #4299e1, #3182ce) !important;
+    color: #ffffff !important;
+    border-radius: 20px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px !important;
+    padding: 16px 24px !important;
+    box-shadow: 6px 6px 12px rgba(163,177,198,0.6), -6px -6px 12px rgba(255,255,255,0.8) !important;
+    transition: all 0.2s ease !important;
+}
+button.primary:active {
+    box-shadow: inset 4px 4px 8px rgba(49, 130, 206, 0.8), inset -4px -4px 8px rgba(100, 180, 255, 0.8) !important;
+    transform: scale(0.98);
+}
+button.secondary {
+    background: #e0e5ec !important;
+    color: #4a5568 !important;
+    border-radius: 20px !important;
+    font-weight: 600 !important;
+    padding: 16px 24px !important;
+    box-shadow: 6px 6px 12px rgba(163,177,198,0.5), -6px -6px 12px rgba(255,255,255,0.8) !important;
+}
+button.secondary:active {
+    box-shadow: inset 4px 4px 8px rgba(163,177,198,0.5), inset -4px -4px 8px rgba(255,255,255,0.8) !important;
+    transform: scale(0.98);
+}
+
+/* 6. Checkboxes & Sliders */
+input[type="checkbox"] {
+    appearance: none !important;
+    width: 24px !important; height: 24px !important;
+    background: #e0e5ec !important;
+    border-radius: 6px !important;
+    box-shadow: inset 3px 3px 6px rgba(163,177,198,0.5), inset -3px -3px 6px rgba(255,255,255,0.8) !important;
+    display: inline-flex !important; align-items: center !important; justify-content: center !important;
+}
+input[type="checkbox"]:checked {
+    background: #3182ce !important;
+    box-shadow: 3px 3px 6px rgba(163,177,198,0.5), -3px -3px 6px rgba(255,255,255,0.8) !important;
+}
+input[type="range"] {
+    background: transparent !important;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+    background: #e0e5ec !important;
+    border-radius: 10px !important;
+    height: 12px !important;
+    box-shadow: inset 3px 3px 6px rgba(163,177,198,0.6), inset -3px -3px 6px rgba(255,255,255,0.8) !important;
+}
+input[type="range"]::-webkit-slider-thumb {
+    appearance: none !important;
+    width: 24px !important; height: 24px !important;
+    margin-top: -6px !important;
+    background: #3182ce !important;
+    border-radius: 50% !important;
+    box-shadow: 3px 3px 6px rgba(163,177,198,0.5), -3px -3px 6px rgba(255,255,255,0.8) !important;
+}
+
+/* 7. Premium Cards (Risk Gauge, Attributions) */
+.bench-card, .gpu-card, .live-card, .risk-gauge, .attr-table-container {
+    background: #e0e5ec !important;
+    border-radius: 30px !important; 
+    padding: 32px !important; 
+    margin-bottom: 24px !important;
+    box-shadow: 8px 8px 16px rgba(163,177,198,0.5), -8px -8px 16px rgba(255,255,255,0.8) !important;
+}
+
 /* Header Adjustments */
-h1 {
-    color: #0f172a !important;
-    font-weight: 800 !important;
-    letter-spacing: -0.5px;
+h1, h2, h3 {
+    color: #2d3748 !important;
+    text-shadow: 2px 2px 4px rgba(163,177,198,0.3), -2px -2px 4px rgba(255,255,255,0.8) !important;
     background: none !important;
-    -webkit-text-fill-color: #0f172a !important;
+    -webkit-text-fill-color: #2d3748 !important;
 }
 
-/* Premium Cards */
-.bench-card, .gpu-card, .live-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px; 
-    padding: 24px; 
-    margin-bottom: 16px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-    transition: box-shadow 0.2s ease;
-}
-.bench-card:hover, .gpu-card:hover { 
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); 
-}
-
-/* Risk Gauge */
-.risk-gauge {
-    text-align: center;
-    padding: 32px 16px;
-    border-radius: 12px;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-    margin-bottom: 16px;
-}
+/* Risk Gauge Internals */
 .risk-gauge .tier-label {
     font-size: 16px; font-weight: 700; letter-spacing: 2px;
-    text-transform: uppercase; margin-bottom: 8px;
-    color: #475569;
+    text-transform: uppercase; margin-bottom: 12px; color: #718096;
 }
 .risk-gauge .risk-pct {
-    font-size: 72px; font-weight: 800; line-height: 1;
-    color: #0f172a;
+    font-size: 80px; font-weight: 800; line-height: 1; color: #2d3748;
+    text-shadow: 4px 4px 8px rgba(163,177,198,0.4), -4px -4px 8px rgba(255,255,255,0.9);
 }
 .risk-gauge .risk-bar-wrap {
-    width: 100%; height: 8px; background: #f1f5f9;
-    border-radius: 4px; overflow: hidden; margin-top: 18px;
-    border: 1px solid #e2e8f0;
+    width: 100%; height: 16px; background: #e0e5ec;
+    border-radius: 10px; overflow: hidden; margin-top: 24px;
+    box-shadow: inset 4px 4px 8px rgba(163,177,198,0.6), inset -4px -4px 8px rgba(255,255,255,0.8);
 }
 .risk-gauge .risk-bar-fill {
-    height: 100%; border-radius: 4px;
-    transition: width 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    height: 100%; border-radius: 10px;
 }
 
 /* Badges and Tables */
 .delta-badge {
-    display: inline-block; padding: 6px 16px; border-radius: 20px;
-    font-weight: 600; font-size: 13px; margin-top: 18px;
-    background: #f8fafc; border: 1px solid #e2e8f0; color: #475569;
+    display: inline-block; padding: 8px 20px; border-radius: 20px;
+    font-weight: 700; font-size: 14px; margin-top: 24px;
+    background: #e0e5ec; color: #4a5568;
+    box-shadow: 4px 4px 8px rgba(163,177,198,0.5), -4px -4px 8px rgba(255,255,255,0.8);
 }
-.attr-table { width:100%; border-collapse:separate; border-spacing:0 4px; font-size:14px; }
+.attr-table { width:100%; border-collapse:separate; border-spacing:0 12px; font-size:14px; }
 .attr-table th {
-    text-align:left; padding:10px 14px; font-weight:600;
-    color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;
-    border-bottom: 1px solid #e2e8f0;
+    text-align:left; padding:10px 14px; font-weight:700;
+    color:#718096; font-size:12px; text-transform:uppercase; letter-spacing:1px;
 }
-.attr-table td { padding:12px 14px; background: #ffffff; border: 1px solid #f1f5f9; }
-.attr-table tr.inc td:first-child { border-left: 4px solid #ef4444; }
-.attr-table tr.dec td:first-child { border-left: 4px solid #10b981; }
+.attr-table td { 
+    padding:16px 20px; background: #e0e5ec; 
+    box-shadow: 4px 4px 8px rgba(163,177,198,0.4), -4px -4px 8px rgba(255,255,255,0.8);
+}
+.attr-table tr td:first-child { border-top-left-radius: 16px; border-bottom-left-radius: 16px; }
+.attr-table tr td:last-child { border-top-right-radius: 16px; border-bottom-right-radius: 16px; }
+.attr-table tr.inc td:first-child { border-left: 6px solid #f56565 !important; }
+.attr-table tr.dec td:first-child { border-left: 6px solid #48bb78 !important; }
 
-.stat-lbl { color: #64748b; font-size: 13px; text-transform: uppercase; font-weight: 600; }
-.stat-val { font-size: 24px; font-weight: 700; color: #2563eb; }
-.gpu-title { font-size:16px; font-weight:700; color:#334155; margin-bottom:16px; display:flex; align-items:center; gap:8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; }
-.gpu-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f1f5f9; }
-.gpu-k { color:#64748b; font-size:14px; }
-.gpu-v { color:#0f172a; font-weight:600; font-size:14px; }
+.stat-lbl { color: #718096; font-size: 13px; text-transform: uppercase; font-weight: 700; }
+.stat-val { font-size: 28px; font-weight: 800; color: #3182ce; }
+.gpu-title { font-size:18px; font-weight:800; color:#2d3748; margin-bottom:20px; display:flex; align-items:center; gap:12px; }
+.gpu-row { display:flex; justify-content:space-between; padding:12px 0; }
+.gpu-k { color:#718096; font-size:15px; font-weight:600;}
+.gpu-v { color:#2d3748; font-weight:700; font-size:15px; }
 """
 
 
@@ -1586,29 +1651,30 @@ def build_demo() -> gr.Blocks:
     dropdown_choices = _build_dropdown_choices()
 
     # ── Theme ──
+    # Neumorphism dictates everything shares the same base color.
     theme = gr.themes.Base(
         primary_hue=gr.themes.colors.blue,
         secondary_hue=gr.themes.colors.slate,
         neutral_hue=gr.themes.colors.slate,
         font=[gr.themes.GoogleFont("Inter"), "system-ui", "sans-serif"],
     ).set(
-        body_background_fill="#f8fafc",
-        body_background_fill_dark="#f8fafc",
-        block_background_fill="#ffffff",
-        block_background_fill_dark="#ffffff",
-        block_border_width="1px",
-        block_border_color="#e2e8f0",
-        block_label_text_color="#64748b",
-        block_title_text_color="#0f172a",
-        input_background_fill="#ffffff",
-        input_background_fill_dark="#ffffff",
-        input_border_color="#cbd5e1",
-        button_primary_background_fill="#2563eb",
-        button_primary_background_fill_hover="#1d4ed8",
+        body_background_fill="#e0e5ec",
+        body_background_fill_dark="#e0e5ec",
+        block_background_fill="#e0e5ec",
+        block_background_fill_dark="#e0e5ec",
+        block_border_width="0px",
+        block_border_color="transparent",
+        block_label_text_color="#718096",
+        block_title_text_color="#2d3748",
+        input_background_fill="#e0e5ec",
+        input_background_fill_dark="#e0e5ec",
+        input_border_color="transparent",
+        button_primary_background_fill="linear-gradient(135deg, #4299e1, #3182ce)",
+        button_primary_background_fill_hover="linear-gradient(135deg, #3182ce, #2b6cb0)",
         button_primary_text_color="#ffffff",
-        button_secondary_background_fill="#f1f5f9",
-        button_secondary_background_fill_hover="#e2e8f0",
-        button_secondary_text_color="#334155",
+        button_secondary_background_fill="#e0e5ec",
+        button_secondary_background_fill_hover="#e0e5ec",
+        button_secondary_text_color="#4a5568",
     )
 
     with gr.Blocks(
