@@ -684,19 +684,45 @@ def render_risk_gauge(
     delta_html = ""
     if delta_info:
         old_tier = delta_info.get("old_tier", "")
-        old_pct = delta_info.get("old_pct", 0)
-        diff = pct - old_pct
-        sign = "+" if diff > 0 else ""
+        old_pct  = delta_info.get("old_pct", 0)
+        diff     = pct - old_pct
+        sign     = "+" if diff > 0 else ""
+
+        # Arrow and color
         if diff > 0:
-            dc, db = "#E24B4A", "rgba(226,75,74,0.12)"
+            dc, db, arrow = "#E24B4A", "rgba(226,75,74,0.10)", "▲"
         elif diff < 0:
-            dc, db = "#1D9E75", "rgba(29,158,117,0.12)"
+            dc, db, arrow = "#1D9E75", "rgba(29,158,117,0.10)", "▼"
         else:
-            dc, db = "#EF9F27", "rgba(239,159,39,0.12)"
+            dc, db, arrow = "#EF9F27", "rgba(239,159,39,0.10)", "→"
+
+        # Parameter changes
+        changes = delta_info.get("changes", [])
+        changes_html = ""
+        if changes:
+            rows = "".join(
+                f"<tr><td style='padding:3px 8px;color:#64748b;font-size:12px;'>{c}</td></tr>"
+                for c in changes
+            )
+            changes_html = (
+                f"<table style='width:100%;margin-top:8px;'>"
+                f"<tr><td colspan='2' style='font-size:11px;font-weight:700;"
+                f"color:#64748b;letter-spacing:0.5px;padding-bottom:4px;'>"
+                f"WHAT CHANGED</td></tr>{rows}</table>"
+            )
+
         delta_html = (
-            f'<div class="delta-badge" style="color:{dc};background:{db};'
-            f'border:1px solid {dc}40;">'
-            f"Risk changed: {old_tier} → {risk_tier} ({sign}{diff} points)"
+            f"<div style='margin-top:14px;padding:14px 16px;"
+            f"background:{db};border-radius:12px;border:1px solid {dc}30;'>"
+            f"<div style='font-size:13px;font-weight:700;color:{dc};"
+            f"margin-bottom:4px;'>"
+            f"{arrow} Risk {('increased' if diff>0 else 'decreased' if diff<0 else 'unchanged')}"
+            f"</div>"
+            f"<div style='font-size:22px;font-weight:800;color:{dc};'>"
+            f"{sign}{diff} pts</div>"
+            f"<div style='font-size:12px;color:#64748b;margin-top:4px;'>"
+            f"{old_tier} ({old_pct}%) → {risk_tier} ({pct}%)</div>"
+            f"{changes_html}"
             f"</div>"
         )
 
@@ -708,6 +734,7 @@ def render_risk_gauge(
         f'<div class="risk-bar-fill" style="width:{pct}%;background:{color};"></div>'
         f"</div>{delta_html}</div>"
     )
+
 
 
 def render_attribution_table(attributions: list[dict]) -> str:
@@ -1098,6 +1125,39 @@ def _run_live_scoring(
         )
 
 
+def _describe_changes(
+    state: dict,
+    enrollment: int,
+    phase: str,
+    multicenter: bool,
+    has_placebo: bool,
+) -> list[str]:
+    """Return a list of human-readable strings describing what changed vs baseline."""
+    changes: list[str] = []
+    orig = state.get("structured_features", {})
+    if not orig:
+        return changes
+
+    orig_enroll = round(orig.get("enrollment_count", orig.get("log_enrollment", 0)))
+    orig_phase_num = orig.get("phase_encoded", 2.0)
+    orig_phase = {1.0:"Phase 1",2.0:"Phase 2",3.0:"Phase 3",4.0:"Phase 4"}.get(orig_phase_num, "Phase 2")
+    orig_multi = bool(orig.get("has_multicenter", 0))
+    orig_placebo = bool(orig.get("has_placebo", 0))
+
+    if enrollment != orig_enroll:
+        changes.append(f"👥 Patients: {orig_enroll} → {enrollment}")
+    if phase != orig_phase:
+        changes.append(f"🔬 Phase: {orig_phase} → {phase}")
+    if multicenter != orig_multi:
+        changes.append(f"🏢 Multicenter: {'Yes' if orig_multi else 'No'} → {'Yes' if multicenter else 'No'}")
+    if has_placebo != orig_placebo:
+        changes.append(f"💊 Placebo: {'Yes' if orig_placebo else 'No'} → {'Yes' if has_placebo else 'No'}")
+
+    if not changes:
+        changes.append("ℹ️ No parameters changed from baseline")
+    return changes
+
+
 def on_whatif_rescore(
     protocol_text: str,
     study_title: str,
@@ -1219,8 +1279,9 @@ def on_whatif_rescore(
 
         delta_info = {
             "old_tier": old_tier,
-            "old_pct": old_pct,
-            "new_pct": round(prob * 100),
+            "old_pct":  old_pct,
+            "new_pct":  round(prob * 100),
+            "changes":  _describe_changes(state, enrollment, phase, multicenter, has_placebo),
         }
         state.update(
             probability=prob, risk_tier=risk_tier,
@@ -1710,11 +1771,30 @@ def build_demo() -> gr.Blocks:
                                 elem_id="protocol_text",
                             )
 
+                            gr.HTML(value="""
+                            <div style='margin:12px 0 8px 0; padding:12px 16px;
+                                        background:#eff6ff; border-radius:10px;
+                                        border-left:4px solid #2563eb;'>
+                              <div style='font-weight:700;color:#1e40af;font-size:13px;
+                                          letter-spacing:0.3px;margin-bottom:6px;'>
+                                ⚡ HOW TO USE THE WHAT-IF SIMULATOR
+                              </div>
+                              <div style='color:#374151;font-size:13px;line-height:1.7;'>
+                                <b>Step 1.</b> Load a demo trial (or upload a protocol) →
+                                click <b>"Score Risk"</b> to get the baseline score.<br>
+                                <b>Step 2.</b> Adjust the <b>patients</b>, <b>phase</b>,
+                                <b>multicenter</b> or <b>placebo</b> sliders below.<br>
+                                <b>Step 3.</b> Click <b>"What-If Rescore"</b> to see how
+                                risk changes — the gauge shows the before → after delta.
+                              </div>
+                            </div>
+                            """)
+
                             with gr.Row():
                                 enrollment_slider = gr.Slider(
                                     minimum=10, maximum=2000, step=10,
                                     value=100,
-                                    label="👥 Enrolled patients",
+                                    label="👥 Enrolled patients  ← adjust me!",
                                     elem_id="enrollment_slider",
                                 )
                                 phase_dropdown = gr.Dropdown(
@@ -1723,7 +1803,7 @@ def build_demo() -> gr.Blocks:
                                         "Phase 3", "Phase 4",
                                     ],
                                     value="Phase 2",
-                                    label="🔬 Trial phase",
+                                    label="🔬 Trial phase  ← adjust me!",
                                     elem_id="phase_dropdown",
                                 )
 
@@ -1746,12 +1826,12 @@ def build_demo() -> gr.Blocks:
 
                             with gr.Row():
                                 score_btn = gr.Button(
-                                    "⚡ Score Risk",
+                                    "⚡ Step 1: Score Risk",
                                     variant="primary", size="lg",
                                     elem_id="score_btn",
                                 )
                                 whatif_btn = gr.Button(
-                                    "🔄 What-if: Rescore with changes",
+                                    "🔄 Step 3: What-If Rescore",
                                     variant="secondary", size="lg",
                                     elem_id="whatif_btn",
                                 )
