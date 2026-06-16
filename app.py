@@ -526,13 +526,20 @@ def _build_feature_vector(
 def _score_to_risk_tier(
     prob: float, threshold: float
 ) -> tuple[str, str]:
-    """Map probability → (tier_label, hex_color)."""
-    if prob >= threshold + 0.15:
+    """Map probability → (tier_label, hex_color).
+    
+    Uses proportional bands relative to the model threshold so all three
+    tiers are reachable regardless of the model's absolute output range.
+    HIGH  ≥ threshold × 1.40
+    LOW   < threshold × 0.65
+    MED   everything in between
+    """
+    if prob >= threshold * 1.40:
         return ("HIGH RISK", "#E24B4A")
-    elif prob >= threshold - 0.15:
-        return ("MEDIUM RISK", "#EF9F27")
-    else:
+    elif prob < threshold * 0.65:
         return ("LOW RISK", "#1D9E75")
+    else:
+        return ("MEDIUM RISK", "#EF9F27")
 
 
 # ── CELL BREAK ──
@@ -1157,17 +1164,17 @@ def on_whatif_rescore(
         # what-if slider reflects real-world risk (underpowered trials terminate ~2x more).
         enrollment_ratio = float(enrollment) / phase_expected.get(phase_num, 150.0)
         if enrollment_ratio < 0.15:
-            enroll_adj = +0.15   # severely underpowered (<15% of expected)
+            enroll_adj = +0.20   # severely underpowered (<15% of expected)
         elif enrollment_ratio < 0.40:
-            enroll_adj = +0.10   # underpowered
+            enroll_adj = +0.13   # underpowered
         elif enrollment_ratio < 0.80:
-            enroll_adj = +0.04   # slightly underpowered
+            enroll_adj = +0.06   # slightly underpowered
         elif enrollment_ratio <= 1.50:
             enroll_adj = 0.00    # on target
         elif enrollment_ratio <= 3.00:
-            enroll_adj = -0.05   # overpowered (lower admin risk)
+            enroll_adj = -0.08   # overpowered (lower admin risk)
         else:
-            enroll_adj = -0.08   # well-overpowered
+            enroll_adj = -0.14   # well-overpowered
 
         prob = float(np.clip(prob + enroll_adj, 0.01, 0.99))
 
