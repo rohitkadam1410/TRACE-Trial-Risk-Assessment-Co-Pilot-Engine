@@ -34,3 +34,7 @@ gradio>=4.0                # Gradio Blocks interface
 requests                   # ClinicalTrials.gov API
 openai                     # OpenAI-compatible client (vLLM)
 anthropic                  # Anthropic API fallback (co-pilot)
+
+# 📄 Document Parsing
+pypdf                      # PDF protocol extraction
+python-docx                # Word document extraction

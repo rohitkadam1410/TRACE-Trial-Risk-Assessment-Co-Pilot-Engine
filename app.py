@@ -887,7 +887,7 @@ def on_demo_trial_selected(choice: str) -> tuple:
     nct_id = _extract_nct_id(choice)
     if not nct_id or nct_id not in _demo_cache_by_id:
         return (
-            "", 100, "Phase 2", False, False,
+            "", 100, "Phase 2", False, False, "",
             empty_gauge, empty_attr, "", None, empty_state,
         )
 
@@ -963,6 +963,7 @@ def on_demo_trial_selected(choice: str) -> tuple:
 
     return (
         protocol_text, study_title, enrollment, phase_str, multicenter, placebo,
+        protocol_text,
         gauge_html, attr_html, summary, waterfall_img, state,
     )
 
@@ -1555,9 +1556,9 @@ def on_run_live_inference() -> str:
 def handle_file_upload(file_obj) -> tuple:
     """
     Extract trial parameters from uploaded files.
-    Returns: (protocol_text, study_title, enrollment, phase_str, multicenter_bool, placebo_bool)
+    Returns: (protocol_text, study_title, enrollment, phase_str, multicenter_bool, placebo_bool, section_text)
     """
-    default_ret = ("", "", 100, "Phase 2", False, False)
+    default_ret = ("", "", 100, "Phase 2", False, False, "")
     if file_obj is None:
         return default_ret
         
@@ -1651,11 +1652,11 @@ def handle_file_upload(file_obj) -> tuple:
         if not multicenter and "multicenter" in tl: multicenter = True
         if not placebo and "placebo" in tl: placebo = True
         
-        return (text, title, enrollment, phase_str, multicenter, placebo)
+        return (text, title, enrollment, phase_str, multicenter, placebo, text)
         
     except Exception as e:
         logger.error(f"Failed to extract trial parameters from {file_path}: {e}")
-        return (f"Error: {e}", "", 100, "Phase 2", False, False)
+        return (f"Error: {e}", "", 100, "Phase 2", False, False, f"Error: {e}")
 
 
 # ---------------------------------------------------------------------------
@@ -1873,7 +1874,7 @@ def build_demo() -> gr.Blocks:
                         inputs=[demo_dropdown],
                         outputs=[
                             protocol_text, study_title, enrollment_slider, phase_dropdown,
-                            multicenter_chk, placebo_chk,
+                            multicenter_chk, placebo_chk, section_text,
                             *_right_outputs,
                         ],
                     )
@@ -1883,7 +1884,7 @@ def build_demo() -> gr.Blocks:
                         inputs=[protocol_file],
                         outputs=[
                             protocol_text, study_title, enrollment_slider, 
-                            phase_dropdown, multicenter_chk, placebo_chk
+                            phase_dropdown, multicenter_chk, placebo_chk, section_text
                         ]
                     )
 
