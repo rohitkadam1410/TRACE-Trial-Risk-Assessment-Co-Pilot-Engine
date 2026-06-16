@@ -1150,8 +1150,29 @@ def on_whatif_rescore(
         # Use cached text probability
         prob_text = state.get("prob_text", prob_struct)
         prob = (prob_struct + prob_text) / 2.0
-        
+
+        # ── Enrollment calibration layer ──
+        # The XGBoost model has weak enrollment signal due to sparse training data.
+        # We apply a transparent, evidence-based calibration adjustment so the
+        # what-if slider reflects real-world risk (underpowered trials terminate ~2x more).
+        enrollment_ratio = float(enrollment) / phase_expected.get(phase_num, 150.0)
+        if enrollment_ratio < 0.15:
+            enroll_adj = +0.15   # severely underpowered (<15% of expected)
+        elif enrollment_ratio < 0.40:
+            enroll_adj = +0.10   # underpowered
+        elif enrollment_ratio < 0.80:
+            enroll_adj = +0.04   # slightly underpowered
+        elif enrollment_ratio <= 1.50:
+            enroll_adj = 0.00    # on target
+        elif enrollment_ratio <= 3.00:
+            enroll_adj = -0.05   # overpowered (lower admin risk)
+        else:
+            enroll_adj = -0.08   # well-overpowered
+
+        prob = float(np.clip(prob + enroll_adj, 0.01, 0.99))
+
         risk_tier, risk_color = _score_to_risk_tier(prob, _threshold)
+
 
         # ── SHAP ──
         attributions: list[dict] = []
