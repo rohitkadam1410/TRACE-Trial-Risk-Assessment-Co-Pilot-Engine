@@ -511,7 +511,7 @@ def _build_feature_vector(
     cols_to_scale = [
         "log_enrollment", "criteria_length",
         "title_length", "text_complexity",
-        "enrollment_deficit", "criteria_unique_ratio"
+        "enrollment_ratio", "criteria_unique_ratio"
     ]
     scale_indices = [
         ordered_cols.index(c) for c in cols_to_scale if c in ordered_cols
