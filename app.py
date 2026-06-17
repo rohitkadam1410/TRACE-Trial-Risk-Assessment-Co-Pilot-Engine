@@ -1381,11 +1381,13 @@ def on_copilot_tab_selected(state: dict):
     return gr.update(choices=choices, value=choices[0] if choices else None)
 
 
-def on_section_selected(section_name: str, state: dict) -> str:
+def on_section_selected(section_name: str, full_text: str) -> str:
     """Extract the relevant section text from the full protocol."""
-    text = state.get("protocol_text", "")
-    if not text or section_name.startswith("("):
+    text = full_text
+    if not text:
         return ""
+    if section_name.startswith("("):
+        return text
 
     text_lower = text.lower()
     section_lower = section_name.lower()
@@ -1780,9 +1782,10 @@ def build_demo() -> gr.Blocks:
         with gr.Row(elem_id="main_container"):
             # ── Sidebar Navigation ──
             with gr.Column(scale=1, elem_id="sidebar_nav"):
-                btn_scorer = gr.Button("🎯 Protocol Risk Scorer", elem_classes=["sidebar-btn", "active"])
-                btn_copilot = gr.Button("🤖 Protocol Co-Pilot", elem_classes=["sidebar-btn"])
-                btn_amd = gr.Button("🚀 AMD Performance", elem_classes=["sidebar-btn"])
+                with gr.Accordion("☰ Navigation", open=True, elem_id="sidebar_accordion"):
+                    btn_scorer = gr.Button("🎯 Protocol Risk Scorer", elem_classes=["sidebar-btn", "active"])
+                    btn_copilot = gr.Button("🤖 Protocol Co-Pilot", elem_classes=["sidebar-btn"])
+                    btn_amd = gr.Button("🚀 AMD Performance", elem_classes=["sidebar-btn"])
 
             # ── Main Content Area ──
             with gr.Column(scale=4, elem_id="main_content"):
@@ -1917,6 +1920,7 @@ def build_demo() -> gr.Blocks:
                                 type="filepath",
                                 interactive=False,
                                 elem_id="waterfall_img",
+                                height=350,
                             )
 
                     _right_outputs = [
@@ -1980,7 +1984,7 @@ def build_demo() -> gr.Blocks:
 
                     section_dd.change(
                         fn=on_section_selected,
-                        inputs=[section_dd, app_state],
+                        inputs=[section_dd, protocol_text],
                         outputs=[section_text],
                     )
 
@@ -2110,6 +2114,16 @@ def build_demo() -> gr.Blocks:
                     ],
                     outputs=_right_outputs,
                 )
+
+                for comp in [enrollment_slider, phase_dropdown, multicenter_chk, placebo_chk]:
+                    comp.change(
+                        fn=on_whatif_rescore,
+                        inputs=[
+                            protocol_text, study_title, enrollment_slider, phase_dropdown,
+                            multicenter_chk, placebo_chk, app_state,
+                        ],
+                        outputs=_right_outputs,
+                    )
 
                 # ── Wire Sidebar Navigation ──
                 def switch_to_scorer():
