@@ -1919,8 +1919,10 @@ def build_demo() -> gr.Blocks:
                                 elem_id="waterfall_img",
                             )
 
-
-
+                    _right_outputs = [
+                        risk_gauge, attribution_html,
+                        explanation_box, waterfall_img, app_state,
+                    ]
                 # ══════════════════════════════════════════════════════
                 # TAB 2 — Protocol Co-Pilot
                 # ══════════════════════════════════════════════════════
@@ -2070,10 +2072,6 @@ def build_demo() -> gr.Blocks:
 
 
                 # ── Wire Tab 1 callbacks ──
-                _right_outputs = [
-                    risk_gauge, attribution_html,
-                    explanation_box, waterfall_img, app_state,
-                ]
 
                 demo_dropdown.change(
                     fn=on_demo_trial_selected,
