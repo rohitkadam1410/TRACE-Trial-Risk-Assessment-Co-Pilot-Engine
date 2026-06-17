@@ -547,26 +547,33 @@ def _score_to_risk_tier(
 # ---------------------------------------------------------------------------
 # HTML rendering helpers
 CUSTOM_CSS: str = """
-/* ── TRACE – Premium Soft UI & Native Sidebar Theme ── */
+/* ── TRACE – Premium Glassmorphism Theme ── */
 
+/* 1. Global Background & Fonts */
 body, .gradio-container {
-    background: #f4f7fb !important;
-    color: #334155 !important;
-    font-family: 'Inter', system-ui, sans-serif !important;
+    background: radial-gradient(circle at 15% 50%, #eff6ff, transparent 40%),
+                radial-gradient(circle at 85% 30%, #f3e8ff, transparent 40%),
+                radial-gradient(circle at 50% 80%, #ecfeff, transparent 40%) !important;
+    background-color: #f8fafc !important;
+    color: #1e293b !important;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+    margin: 0 !important;
 }
 
-/* Sidebar Custom Styling */
+/* 2. Sidebar Custom Styling */
 #sidebar_nav {
-    background: #ffffff !important;
-    border-radius: 16px !important;
+    background: rgba(255, 255, 255, 0.6) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border-radius: 24px !important;
     padding: 24px 16px !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04), inset 0 0 0 1px rgba(255,255,255,0.8) !important;
     height: 100%;
 }
 .sidebar-btn {
     text-align: left !important;
     padding: 16px 20px !important;
-    border-radius: 12px !important;
+    border-radius: 16px !important;
     margin-bottom: 12px !important;
     background: transparent !important;
     border: none !important;
@@ -574,101 +581,150 @@ body, .gradio-container {
     font-weight: 600 !important;
     font-size: 15px !important;
     box-shadow: none !important;
-    transition: all 0.2s ease !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 .sidebar-btn:hover {
-    background: #f8fafc !important;
-    color: #2563eb !important;
+    background: rgba(255, 255, 255, 0.8) !important;
+    color: #3b82f6 !important;
+    transform: translateX(4px);
 }
 .sidebar-btn.active {
-    background: #eff6ff !important;
-    color: #2563eb !important;
-    border: 1px solid #bfdbfe !important;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6) !important;
+    color: #ffffff !important;
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.25) !important;
 }
 
-/* Main Content Area */
+/* 3. Main Content Area */
 #main_content {
-    padding: 0 16px !important;
+    padding: 0 24px !important;
 }
 
-/* Premium Cards */
-.bench-card, .gpu-card, .live-card, .risk-gauge, .attr-table-container, .upload-container, .wrap {
-    background: #ffffff !important;
-    border-radius: 16px !important;
-    padding: 24px !important;
-    margin-bottom: 20px !important;
-    border: 1px solid rgba(0,0,0,0.02) !important;
-    box-shadow: 0 8px 24px rgba(0, 50, 100, 0.04) !important;
+/* 4. Premium Cards (Glassmorphism) */
+.bench-card, .gpu-card, .live-card, .risk-gauge, .attr-table-container, .upload-container, .wrap, .gradio-box {
+    background: rgba(255, 255, 255, 0.7) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    border-radius: 24px !important;
+    padding: 28px !important;
+    margin-bottom: 24px !important;
+    border: 1px solid rgba(255,255,255,0.9) !important;
+    box-shadow: 0 12px 40px rgba(0, 10, 40, 0.04), 0 1px 3px rgba(0,0,0,0.02) !important;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.bench-card:hover, .gpu-card:hover, .live-card:hover, .risk-gauge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 48px rgba(0, 10, 40, 0.06), 0 2px 6px rgba(0,0,0,0.02) !important;
 }
 
-/* Headers */
-h1 {
+/* 5. Headers & Typography */
+h1, h2, h3 {
     color: #0f172a !important;
     font-weight: 800 !important;
     letter-spacing: -0.5px;
-    background: none !important;
-    -webkit-text-fill-color: #0f172a !important;
 }
 
-/* Primary Buttons */
-button.primary {
-    background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
-    color: #ffffff !important;
+/* 6. Inputs & Gradio Overrides */
+input, textarea, select, .gr-box {
     border-radius: 12px !important;
-    font-weight: 600 !important;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2) !important;
+    border: 1px solid rgba(0,0,0,0.06) !important;
+    background: rgba(255,255,255,0.8) !important;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.01) !important;
+    transition: all 0.2s ease !important;
+}
+input:focus, textarea:focus, select:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+    background: #ffffff !important;
+}
+
+/* 7. Primary Buttons */
+button.primary {
+    background: linear-gradient(135deg, #3b82f6, #6366f1) !important;
+    color: #ffffff !important;
+    border-radius: 16px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.3px;
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.25), inset 0 1px 0 rgba(255,255,255,0.2) !important;
     border: none !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 button.primary:hover {
-    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3) !important;
+    box-shadow: 0 12px 32px rgba(59, 130, 246, 0.35), inset 0 1px 0 rgba(255,255,255,0.2) !important;
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, #2563eb, #4f46e5) !important;
+}
+
+button.secondary {
+    background: #ffffff !important;
+    color: #334155 !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 16px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03) !important;
+    transition: all 0.2s ease !important;
+}
+button.secondary:hover {
+    background: #f8fafc !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.05) !important;
     transform: translateY(-1px);
 }
 
-/* Risk Gauge */
+/* 8. Risk Gauge */
 .risk-gauge {
     text-align: center;
-    padding: 32px 16px;
+    padding: 40px 24px;
+    position: relative;
+    overflow: hidden;
+}
+.risk-gauge::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: linear-gradient(90deg, #10b981, #f59e0b, #ef4444);
 }
 .risk-gauge .tier-label {
-    font-size: 15px; font-weight: 700; letter-spacing: 1px;
-    text-transform: uppercase; margin-bottom: 8px; color: #64748b;
+    font-size: 16px; font-weight: 800; letter-spacing: 1.5px;
+    text-transform: uppercase; margin-bottom: 12px; color: #64748b;
 }
 .risk-gauge .risk-pct {
-    font-size: 72px; font-weight: 800; line-height: 1; color: #0f172a;
+    font-size: 84px; font-weight: 900; line-height: 1; color: #0f172a;
+    letter-spacing: -2px; text-shadow: 0 4px 12px rgba(0,0,0,0.04);
 }
 .risk-gauge .risk-bar-wrap {
-    width: 100%; height: 10px; background: #f1f5f9;
-    border-radius: 6px; overflow: hidden; margin-top: 20px;
+    width: 100%; height: 12px; background: #e2e8f0;
+    border-radius: 8px; overflow: hidden; margin-top: 24px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
 }
 .risk-gauge .risk-bar-fill {
-    height: 100%; border-radius: 6px;
+    height: 100%; border-radius: 8px;
+    box-shadow: 0 0 12px currentColor;
 }
 
-/* Badges and Tables */
+/* 9. Badges and Tables */
 .delta-badge {
     display: inline-block; padding: 6px 16px; border-radius: 20px;
     font-weight: 600; font-size: 13px; margin-top: 18px;
     background: #f8fafc; color: #475569; border: 1px solid #e2e8f0;
 }
-.attr-table { width:100%; border-collapse:separate; border-spacing:0 4px; font-size:14px; }
+.attr-table { width:100%; border-collapse:separate; border-spacing:0 6px; font-size:14px; }
 .attr-table th {
-    text-align:left; padding:10px 14px; font-weight:600;
-    color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;
-    border-bottom: 1px solid #e2e8f0;
+    text-align:left; padding:12px 16px; font-weight:700;
+    color:#475569; font-size:12px; text-transform:uppercase; letter-spacing:0.8px;
+    border-bottom: 2px solid #f1f5f9;
 }
 .attr-table td { 
-    padding:14px 16px; background: #ffffff; 
-    border: 1px solid #f1f5f9;
+    padding:16px 18px; background: rgba(255,255,255,0.6); 
+    border: 1px solid #f1f5f9; border-radius: 12px;
 }
-.attr-table tr.inc td:first-child { border-left: 4px solid #ef4444 !important; }
-.attr-table tr.dec td:first-child { border-left: 4px solid #10b981 !important; }
+.attr-table tr.inc td:first-child { border-left: 4px solid #ef4444 !important; border-top-left-radius: 12px; border-bottom-left-radius: 12px;}
+.attr-table tr.dec td:first-child { border-left: 4px solid #10b981 !important; border-top-left-radius: 12px; border-bottom-left-radius: 12px;}
 
-.stat-lbl { color: #64748b; font-size: 13px; text-transform: uppercase; font-weight: 600; }
-.stat-val { font-size: 26px; font-weight: 800; color: #2563eb; }
-.gpu-title { font-size:16px; font-weight:700; color:#334155; margin-bottom:16px; display:flex; align-items:center; gap:8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;}
-.gpu-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f8fafc; }
-.gpu-k { color:#64748b; font-size:14px; }
-.gpu-v { color:#0f172a; font-weight:600; font-size:14px; }
+.stat-lbl { color: #64748b; font-size: 13px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;}
+.stat-val { font-size: 28px; font-weight: 900; color: #3b82f6; text-shadow: 0 2px 10px rgba(59,130,246,0.15);}
+.gpu-title { font-size:18px; font-weight:800; color:#1e293b; margin-bottom:16px; display:flex; align-items:center; gap:8px; border-bottom: 2px solid #f1f5f9; padding-bottom: 14px;}
+.gpu-row { display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid rgba(0,0,0,0.03); }
+.gpu-k { color:#64748b; font-size:14px; font-weight: 500;}
+.gpu-v { color:#0f172a; font-weight:700; font-size:14px; }
 """
 
 
