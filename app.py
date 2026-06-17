@@ -1373,7 +1373,7 @@ def _section_choices_from_state(state: dict) -> list[str]:
     attrs = state.get("attributions", [])
     if not attrs:
         return ["(Full Protocol)", "Eligibility", "Endpoint", "Design", "Enrollment", "Complexity"]
-    return [a["section"] for a in attrs]
+    return ["(Full Protocol)"] + [a["section"] for a in attrs]
 
 
 def on_copilot_tab_selected(state: dict):
@@ -1420,11 +1420,11 @@ def on_section_selected(section_name: str, full_text: str) -> str:
             for marker in markers:
                 idx = text_lower.find(marker)
                 if idx >= 0:
-                    snippet = text[max(0, idx - 30): idx + 500].strip()
+                    snippet = text[max(0, idx - 30): idx + 2000].strip()
                     return snippet
 
-    # Fallback: first 500 chars
-    return text[:500].strip()
+    # Fallback: first 2000 chars
+    return text[:2000].strip()
 
 
 def on_suggest_improvements(

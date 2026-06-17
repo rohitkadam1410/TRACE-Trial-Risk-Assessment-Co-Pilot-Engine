@@ -411,7 +411,7 @@ def benchmark_vllm(
     """
     import requests as req  # local alias to avoid clash with top-level
 
-    url = f"http://localhost:{port}/v1/completions"
+    url = f"http://localhost:{port}/v1/chat/completions"
 
     # Representative clinical-trial explanation prompts
     base_prompt = (
@@ -438,14 +438,18 @@ def benchmark_vllm(
         for i in range(n_prompts)
     ]
 
-    # Check server availability before running the full benchmark
+    # Check server availability and get model ID before running the full benchmark
     try:
         health = req.get(f"http://localhost:{port}/health", timeout=5)
         health.raise_for_status()
-    except Exception:
+        
+        models_resp = req.get(f"http://localhost:{port}/v1/models", timeout=5)
+        models_resp.raise_for_status()
+        model_id = models_resp.json()["data"][0]["id"]
+    except Exception as e:
         warnings.warn(
-            f"vLLM server not reachable on port {port}. "
-            "Skipping LLM benchmark. Start vLLM first."
+            f"vLLM server not reachable on port {port} or failed to fetch models. "
+            f"Error: {e}. Skipping LLM benchmark."
         )
         return {
             "status": "skipped",
@@ -453,12 +457,12 @@ def benchmark_vllm(
         }
 
     latencies: list[float] = []
-    print(f"Sending {n_prompts} prompts to vLLM on port {port}...")
+    print(f"Sending {n_prompts} prompts to vLLM on port {port} using model {model_id}...")
 
     for i, prompt in enumerate(prompts):
         payload = {
-            "model": "mistralai/Mistral-7B-Instruct-v0.3",
-            "prompt": prompt,
+            "model": model_id,
+            "messages": [{"role": "user", "content": prompt}],
             "max_tokens": 256,
             "temperature": 0.7,
         }
