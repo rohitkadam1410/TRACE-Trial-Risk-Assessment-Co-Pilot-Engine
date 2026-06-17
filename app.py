@@ -1674,25 +1674,40 @@ def handle_file_upload(file_obj) -> tuple:
             df = pd.read_csv(file_path)
             if not df.empty:
                 row = df.iloc[0]
-                text = str(row.get("full_text", row.get("description", "")))
-                title = str(row.get("officialTitle", row.get("title", "")))
                 
-                enroll_val = row.get("enrollment_count", row.get("enrollment", 100))
-                enrollment = int(enroll_val) if pd.notna(enroll_val) else 100
+                # Robust title extraction
+                title_cols = ["Study Title", "officialTitle", "title", "Title"]
+                title = next((str(row[c]) for c in title_cols if c in row and pd.notna(row[c])), "")
                 
-                phase_val = row.get("phase_encoded", row.get("phase", 2))
-                if pd.notna(phase_val):
-                    phase_str = f"Phase {int(phase_val)}" if isinstance(phase_val, (int, float)) else str(phase_val)
-                    if not phase_str.startswith("Phase"):
-                        phase_str = f"Phase {phase_str}"
-                    if phase_str not in ["Phase 1", "Phase 2", "Phase 3", "Phase 4"]:
-                        phase_str = "Phase 2"
+                # Robust text extraction
+                text_cols = ["Detailed Description", "Brief Summary", "full_text", "description", "Study Design", "Conditions"]
+                text_parts = [str(row[c]) for c in text_cols if c in row and pd.notna(row[c]) and str(row[c]).strip().lower() != "nan"]
+                text = "\n\n".join(text_parts) if text_parts else str(row.to_dict())
                 
-                mc_val = row.get("has_multicenter", row.get("multicenter", False))
-                multicenter = bool(mc_val) if pd.notna(mc_val) else False
+                # Robust enrollment
+                enroll_cols = ["Enrollment", "enrollment_count", "enrollment"]
+                enroll_val = next((row[c] for c in enroll_cols if c in row and pd.notna(row[c])), 100)
+                try:
+                    enrollment = int(float(str(enroll_val).replace(',', '')))
+                except Exception:
+                    enrollment = 100
+                    
+                # Robust phase
+                phase_cols = ["Phases", "phase_encoded", "phase", "Phase"]
+                phase_val = next((row[c] for c in phase_cols if c in row and pd.notna(row[c])), 2)
+                phase_str_raw = str(phase_val)
+                if "1" in phase_str_raw: phase_str = "Phase 1"
+                elif "3" in phase_str_raw: phase_str = "Phase 3"
+                elif "4" in phase_str_raw: phase_str = "Phase 4"
+                else: phase_str = "Phase 2"
                 
-                pl_val = row.get("has_placebo", row.get("placebo", False))
-                placebo = bool(pl_val) if pd.notna(pl_val) else False
+                # Multicenter / Placebo
+                text_lower = text.lower()
+                mc_val = row.get("has_multicenter", row.get("multicenter", None))
+                multicenter = bool(mc_val) if pd.notna(mc_val) else ("multicenter" in text_lower or "multi-center" in text_lower)
+                
+                pl_val = row.get("has_placebo", row.get("placebo", None))
+                placebo = bool(pl_val) if pd.notna(pl_val) else ("placebo" in text_lower)
                 
         elif ext == ".pdf":
             import pypdf
