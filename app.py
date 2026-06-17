@@ -1368,17 +1368,26 @@ def on_whatif_rescore(
 # ---------------------------------------------------------------------------
 
 
-def _section_choices_from_state(state: dict) -> list[str]:
-    """Derive section dropdown options from the current attributions."""
+def on_copilot_tab_selected(state: dict, text: str = ""):
+    """Refresh section choices based on the protocol text and attributions."""
+    choices = ["(Full Protocol)"]
+    
+    import re
+    headers = re.findall(r"^--- (.+?) ---$", text, flags=re.MULTILINE)
+    for h in headers:
+        title_case = h.strip().title()
+        if title_case not in choices:
+            choices.append(title_case)
+    
     attrs = state.get("attributions", [])
-    if not attrs:
-        return ["(Full Protocol)", "Eligibility", "Endpoint", "Design", "Enrollment", "Complexity"]
-    return ["(Full Protocol)"] + [a["section"] for a in attrs]
-
-
-def on_copilot_tab_selected(state: dict):
-    """Refresh section choices when the user switches to the co-pilot tab."""
-    choices = _section_choices_from_state(state)
+    for a in attrs:
+        sec = a["section"]
+        if sec not in choices:
+            choices.append(sec)
+            
+    if len(choices) == 1:
+        choices.extend(["Eligibility", "Endpoint", "Design", "Enrollment", "Complexity"])
+        
     return gr.update(choices=choices, value=choices[0] if choices else None)
 
 
@@ -1392,6 +1401,17 @@ def on_section_selected(section_name: str, full_text: str) -> str:
 
     text_lower = text.lower()
     section_lower = section_name.lower()
+
+    # Try exact header match first
+    import re
+    header_pattern = f"--- {section_name.upper()} ---"
+    idx = text.find(header_pattern)
+    if idx >= 0:
+        snippet = text[idx:]
+        next_header_match = re.search(r"\n--- .+? ---", snippet[len(header_pattern):])
+        if next_header_match:
+            snippet = snippet[:len(header_pattern) + next_header_match.start()]
+        return snippet.strip()
 
     # Heuristic markers for each section type
     marker_map: dict[str, list[str]] = {
@@ -2155,7 +2175,7 @@ def build_demo() -> gr.Blocks:
 
                 btn_scorer.click(fn=switch_to_scorer, inputs=[], outputs=sidebar_outputs)
                 btn_copilot.click(fn=switch_to_copilot, inputs=[], outputs=sidebar_outputs).then(
-                    fn=on_copilot_tab_selected, inputs=[app_state], outputs=[section_dd]
+                    fn=on_copilot_tab_selected, inputs=[app_state, protocol_text], outputs=[section_dd]
                 )
                 btn_amd.click(fn=switch_to_amd, inputs=[], outputs=sidebar_outputs)
 
