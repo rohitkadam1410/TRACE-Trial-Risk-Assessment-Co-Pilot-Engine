@@ -833,10 +833,9 @@ def render_benchmark_panel(summary: Optional[dict]) -> str:
             "Benchmark data not available. Run benchmark.py first.</p></div>"
         )
     headline = summary.get("headline", "")
-    pipeline = summary.get("pipeline", {})
-    gpu_total = pipeline.get("gpu_total_sec", 0)
-    n_trials = pipeline.get("n_trials", 100)
-    speedup = pipeline.get("speedup_vs_cpu", 0)
+    gpu_total = summary.get("full_pipeline_amd_seconds", 0.0)
+    n_trials = summary.get("n_trials", 100)
+    speedup = summary.get("speedup_vs_cpu", 0.0)
     ms_pp = (gpu_total / max(n_trials, 1)) * 1000 if gpu_total else 0
     return (
         '<div class="bench-card">'
@@ -1830,7 +1829,7 @@ def build_demo() -> gr.Blocks:
         with gr.Row(elem_id="top_nav"):
             btn_scorer = gr.Button("🎯 Protocol Risk Scorer", elem_classes=["top-btn", "active"], scale=1)
             btn_copilot = gr.Button("🤖 Protocol Co-Pilot", elem_classes=["top-btn"], scale=1)
-            btn_amd = gr.Button("🚀 AMD Performance", elem_classes=["top-btn"], scale=1, visible=False)
+            btn_amd = gr.Button("🚀 AMD Performance", elem_classes=["top-btn"], scale=1)
 
         with gr.Row(elem_id="main_container"):
             # ── Main Content Area ──
