@@ -1802,16 +1802,7 @@ def build_demo() -> gr.Blocks:
                     with gr.Row():
                         # ── Left column (60 %) ──
                         with gr.Column(scale=3):
-                            demo_dropdown = gr.Dropdown(
-                                choices=dropdown_choices,
-                                label="📋 Load demo trial",
-                                value=(
-                                    dropdown_choices[0]
-                                    if dropdown_choices else None
-                                ),
-                                interactive=True,
-                                elem_id="demo_trial_dropdown",
-                            )
+
                             protocol_file = gr.File(
                                 label="📄 Upload Protocol (JSON/CSV/TXT/PDF/DOCX)",
                                 file_types=[".json", ".csv", ".txt", ".pdf", ".docx"],
@@ -2079,16 +2070,6 @@ def build_demo() -> gr.Blocks:
 
 
                 # ── Wire Tab 1 callbacks ──
-
-                demo_dropdown.change(
-                    fn=on_demo_trial_selected,
-                    inputs=[demo_dropdown],
-                    outputs=[
-                        protocol_text, study_title, enrollment_slider, phase_dropdown,
-                        multicenter_chk, placebo_chk, section_text,
-                        *_right_outputs,
-                    ],
-                )
 
                 protocol_file.upload(
                     fn=handle_file_upload,
