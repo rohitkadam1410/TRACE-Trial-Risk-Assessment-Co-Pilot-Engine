@@ -1680,8 +1680,16 @@ def handle_file_upload(file_obj) -> tuple:
                 title = next((str(row[c]) for c in title_cols if c in row and pd.notna(row[c])), "")
                 
                 # Robust text extraction
-                text_cols = ["Detailed Description", "Brief Summary", "full_text", "description", "Study Design", "Conditions"]
-                text_parts = [str(row[c]) for c in text_cols if c in row and pd.notna(row[c]) and str(row[c]).strip().lower() != "nan"]
+                text_cols = [
+                    "Detailed Description", "Brief Summary", "Eligibility Criteria", 
+                    "Primary Outcome Measures", "Secondary Outcome Measures", 
+                    "Study Design", "Conditions", "Interventions", "full_text", "description"
+                ]
+                text_parts = []
+                for c in text_cols:
+                    if c in row and pd.notna(row[c]) and str(row[c]).strip().lower() != "nan":
+                        text_parts.append(f"--- {c.upper()} ---\n{str(row[c])}")
+                
                 text = "\n\n".join(text_parts) if text_parts else str(row.to_dict())
                 
                 # Robust enrollment
