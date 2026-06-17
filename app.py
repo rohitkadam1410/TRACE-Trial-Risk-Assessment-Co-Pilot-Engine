@@ -570,28 +570,29 @@ body, .gradio-container {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04), inset 0 0 0 1px rgba(255,255,255,0.8) !important;
     height: 100%;
 }
-.sidebar-btn {
-    text-align: left !important;
-    padding: 16px 20px !important;
-    border-radius: 16px !important;
-    margin-bottom: 12px !important;
-    background: transparent !important;
-    border: none !important;
-    color: #64748b !important;
+.top-btn {
+    text-align: center !important;
+    padding: 12px 24px !important;
+    border-radius: 12px !important;
     font-weight: 600 !important;
     font-size: 15px !important;
+    color: #64748b !important;
+    background: transparent !important;
+    border: none !important;
     box-shadow: none !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    margin: 0 4px !important;
 }
-.sidebar-btn:hover {
+.top-btn:hover {
     background: rgba(255, 255, 255, 0.8) !important;
     color: #3b82f6 !important;
-    transform: translateX(4px);
+    transform: translateY(-2px);
 }
-.sidebar-btn.active {
+.top-btn.active {
     background: linear-gradient(135deg, #3b82f6, #8b5cf6) !important;
     color: #ffffff !important;
     box-shadow: 0 8px 20px rgba(59, 130, 246, 0.25) !important;
+    transform: translateY(-2px);
 }
 
 /* 3. Main Content Area */
@@ -1371,7 +1372,7 @@ def _section_choices_from_state(state: dict) -> list[str]:
     """Derive section dropdown options from the current attributions."""
     attrs = state.get("attributions", [])
     if not attrs:
-        return ["(Score a trial first)"]
+        return ["(Full Protocol)", "Eligibility", "Endpoint", "Design", "Enrollment", "Complexity"]
     return [a["section"] for a in attrs]
 
 
@@ -1682,6 +1683,10 @@ def handle_file_upload(file_obj) -> tuple:
                 phase_val = row.get("phase_encoded", row.get("phase", 2))
                 if pd.notna(phase_val):
                     phase_str = f"Phase {int(phase_val)}" if isinstance(phase_val, (int, float)) else str(phase_val)
+                    if not phase_str.startswith("Phase"):
+                        phase_str = f"Phase {phase_str}"
+                    if phase_str not in ["Phase 1", "Phase 2", "Phase 3", "Phase 4"]:
+                        phase_str = "Phase 2"
                 
                 mc_val = row.get("has_multicenter", row.get("multicenter", False))
                 multicenter = bool(mc_val) if pd.notna(mc_val) else False
@@ -1779,16 +1784,14 @@ def build_demo() -> gr.Blocks:
         )
 
 
-        with gr.Row(elem_id="main_container"):
-            # ── Sidebar Navigation ──
-            with gr.Column(scale=1, elem_id="sidebar_nav"):
-                with gr.Accordion("☰ Navigation", open=True, elem_id="sidebar_accordion"):
-                    btn_scorer = gr.Button("🎯 Protocol Risk Scorer", elem_classes=["sidebar-btn", "active"])
-                    btn_copilot = gr.Button("🤖 Protocol Co-Pilot", elem_classes=["sidebar-btn"])
-                    btn_amd = gr.Button("🚀 AMD Performance", elem_classes=["sidebar-btn"])
+        with gr.Row(elem_id="top_nav"):
+            btn_scorer = gr.Button("🎯 Protocol Risk Scorer", elem_classes=["top-btn", "active"], scale=1)
+            btn_copilot = gr.Button("🤖 Protocol Co-Pilot", elem_classes=["top-btn"], scale=1)
+            btn_amd = gr.Button("🚀 AMD Performance", elem_classes=["top-btn"], scale=1)
 
+        with gr.Row(elem_id="main_container"):
             # ── Main Content Area ──
-            with gr.Column(scale=4, elem_id="main_content"):
+            with gr.Column(elem_id="main_content"):
 
 
                 # ══════════════════════════════════════════════════════
@@ -2092,7 +2095,7 @@ def build_demo() -> gr.Blocks:
                     inputs=[protocol_file],
                     outputs=[
                         protocol_text, study_title, enrollment_slider, 
-                        phase_dropdown, multicenter_chk, placebo_chk, section_text
+                        phase_dropdown, multicenter_chk, placebo_chk, section_text, section_dd
                     ]
                 )
 
@@ -2128,21 +2131,21 @@ def build_demo() -> gr.Blocks:
                 # ── Wire Sidebar Navigation ──
                 def switch_to_scorer():
                     return (gr.update(visible=True), gr.update(visible=False), gr.update(visible=False), 
-                            gr.update(elem_classes=["sidebar-btn", "active"]), 
-                            gr.update(elem_classes=["sidebar-btn"]), 
-                            gr.update(elem_classes=["sidebar-btn"]))
+                            gr.update(elem_classes=["top-btn", "active"]), 
+                            gr.update(elem_classes=["top-btn"]), 
+                            gr.update(elem_classes=["top-btn"]))
                 
                 def switch_to_copilot():
                     return (gr.update(visible=False), gr.update(visible=True), gr.update(visible=False),
-                            gr.update(elem_classes=["sidebar-btn"]), 
-                            gr.update(elem_classes=["sidebar-btn", "active"]), 
-                            gr.update(elem_classes=["sidebar-btn"]))
+                            gr.update(elem_classes=["top-btn"]), 
+                            gr.update(elem_classes=["top-btn", "active"]), 
+                            gr.update(elem_classes=["top-btn"]))
 
                 def switch_to_amd():
                     return (gr.update(visible=False), gr.update(visible=False), gr.update(visible=True),
-                            gr.update(elem_classes=["sidebar-btn"]), 
-                            gr.update(elem_classes=["sidebar-btn"]), 
-                            gr.update(elem_classes=["sidebar-btn", "active"]))
+                            gr.update(elem_classes=["top-btn"]), 
+                            gr.update(elem_classes=["top-btn"]), 
+                            gr.update(elem_classes=["top-btn", "active"]))
 
                 sidebar_outputs = [panel_scorer, panel_copilot, panel_amd, btn_scorer, btn_copilot, btn_amd]
 
