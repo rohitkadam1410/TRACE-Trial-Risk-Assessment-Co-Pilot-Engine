@@ -1830,7 +1830,7 @@ def build_demo() -> gr.Blocks:
         with gr.Row(elem_id="top_nav"):
             btn_scorer = gr.Button("🎯 Protocol Risk Scorer", elem_classes=["top-btn", "active"], scale=1)
             btn_copilot = gr.Button("🤖 Protocol Co-Pilot", elem_classes=["top-btn"], scale=1)
-            btn_amd = gr.Button("🚀 AMD Performance", elem_classes=["top-btn"], scale=1)
+            btn_amd = gr.Button("🚀 AMD Performance", elem_classes=["top-btn"], scale=1, visible=False)
 
         with gr.Row(elem_id="main_container"):
             # ── Main Content Area ──
