@@ -2095,7 +2095,7 @@ def build_demo() -> gr.Blocks:
                     inputs=[protocol_file],
                     outputs=[
                         protocol_text, study_title, enrollment_slider, 
-                        phase_dropdown, multicenter_chk, placebo_chk, section_text, section_dd
+                        phase_dropdown, multicenter_chk, placebo_chk, section_text
                     ]
                 )
 
