@@ -1369,7 +1369,7 @@ def on_whatif_rescore(
 
 def on_copilot_tab_selected(state: dict, text: str = ""):
     """Refresh section choices based on the protocol text and attributions."""
-    choices = ["(Full Protocol)"]
+    choices = []
     
     import re
     headers = re.findall(r"^--- (.+?) ---$", text, flags=re.MULTILINE)
@@ -1384,10 +1384,13 @@ def on_copilot_tab_selected(state: dict, text: str = ""):
         if sec not in choices:
             choices.append(sec)
             
-    if len(choices) == 1:
-        choices.extend(["Eligibility", "Endpoint", "Design", "Enrollment", "Complexity"])
+    if not choices:
+        choices = ["(Full Protocol)", "Eligibility", "Endpoint", "Design", "Enrollment", "Complexity"]
         
-    return gr.update(choices=choices, value=choices[0] if choices else None)
+    default_val = choices[0]
+    new_text = on_section_selected(default_val, text)
+    
+    return gr.update(choices=choices, value=default_val), gr.update(value=new_text)
 
 
 def on_section_selected(section_name: str, full_text: str) -> str:
@@ -2174,7 +2177,7 @@ def build_demo() -> gr.Blocks:
 
                 btn_scorer.click(fn=switch_to_scorer, inputs=[], outputs=sidebar_outputs)
                 btn_copilot.click(fn=switch_to_copilot, inputs=[], outputs=sidebar_outputs).then(
-                    fn=on_copilot_tab_selected, inputs=[app_state, protocol_text], outputs=[section_dd]
+                    fn=on_copilot_tab_selected, inputs=[app_state, protocol_text], outputs=[section_dd, section_text]
                 )
                 btn_amd.click(fn=switch_to_amd, inputs=[], outputs=sidebar_outputs)
 
